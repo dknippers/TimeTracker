@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+        <meta name="theme-color" content="#000000" />
+        <title>Time Tracker</title>
+    </head>
+    <body>
+        <div id="time-tracker">
+            <aside>
+                <h2>Bookmarks</h2>
+                <hr />
+            </aside>
+            <main>
+                <h1>Time Tracker</h1>
+
+                <div>
+                    <input
+                        class="new-task"
+                        type="text"
+                        placeholder="New task"
+                        @keyup.enter="inputTask()"
+                        v-model="nextTaskName"
+                    />
+                </div>
+
+                <ul v-for="task in tasks">
+                    <li :class="{ active: task.active }" :key="task.id">
+                        <span v-text="task.name"></span>
+                        <span>Total time: {{ getTaskDuration(task) }}</span>
+
+                        <ul
+                            v-if="task.chunks.length > 0"
+                            v-for="chunk in task.chunks"
+                            :key="chunk.begin"
+                        >
+                            <li>Duration: {{ getChunkDuration(chunk) }}</li>
+                        </ul>
+
+                        <div class="controls">
+                            <button
+                                v-if="task.active"
+                                @click="stopTask(task.id)"
+                            >
+                                Stop
+                            </button>
+                            <button
+                                v-if="!task.active"
+                                @click="startTask(task.id)"
+                            >
+                                Continue
+                            </button>
+                            <button @click="removeTask(task.id)">Remove</button>
+                            <button @click="resetTask(task.id)">Reset</button>
+                        </div>
+                    </li>
+                </ul>
+            </main>
+            <aside>
+                <h2>Total</h2>
+                <hr />
+                <div
+                    v-for="task in tasks"
+                    v-if="getTaskTotalSeconds(task) > 0"
+                    class="total-list"
+                >
+                    <strong v-text="task.name"></strong>
+                    <span v-text="getTaskDuration(task)"></span>
+                    <button @click="toggleDetails(task.id)">
+                        toggle info
+                    </button>
+
+                    <ul
+                        v-for="chunk in task.chunks"
+                        v-if="ui.task.showDetails[task.id]"
+                        :key="chunk.begin"
+                    >
+                        <li>Duration: {{ getChunkDuration(chunk) }}</li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+
+        <style>
+            * {
+                box-sizing: border-box;
+                font-family: Calibri, sans-serif;
+            }
+
+            html {
+                font-size: 1vw;
+            }
+
+            body {
+                padding: 0;
+                margin: 0;
+            }
+
+            #time-tracker {
+                padding: 2rem;
+                display: flex;
+                max-width: 1200px;
+                margin: 0 auto;
+                font-size: 1.5rem;
+            }
+
+            @media screen and (min-width: 1200px) {
+                html {
+                    font-size: 12px;
+                }
+            }
+
+            h1 {
+                text-align: center;
+                margin: 0;
+            }
+
+            h2 {
+                text-align: center;
+                margin: 0;
+            }
+
+            input.new-task {
+                margin-top: 2rem;
+                width: 95%;
+                padding: 1rem 1.5rem;
+                box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+                border: 0;
+                font-size: 1.5rem;
+            }
+
+            main,
+            aside {
+                padding: 2rem;
+            }
+
+            main {
+                flex: 5;
+                border-color: lightgray;
+                border-width: 0 1px 0 1px;
+                border-style: solid;
+            }
+
+            aside {
+                flex: 3;
+            }
+        </style>
+
+        <script src="vue-2.6.6.js"></script>
+        <script src="script.js"></script>
+    </body>
+</html>
