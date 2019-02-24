@@ -59,6 +59,10 @@
                         </div>
                     </li>
                 </ul>
+
+                <div v-if="tasks.length > 0">
+                    <button type="button" @click="clearAll()">Clear all</button>
+                </div>
             </main>
             <aside>
                 <h2>Total</h2>
