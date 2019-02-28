@@ -10,9 +10,9 @@
         <title>Time Tracker</title>
     </head>
     <body>
-        <div id="time-tracker">
+        <div id="time-tracker" :class="{ loaded: 1 }">
             <aside>
-                <h2>Bookmarks</h2>
+                <h2>Frequent</h2>
                 <hr />
             </aside>
             <main>
@@ -106,10 +106,14 @@
 
             #time-tracker {
                 padding: 2rem;
-                display: flex;
+                display: none;
                 max-width: 1200px;
                 margin: 0 auto;
                 font-size: 1.5rem;
+            }
+
+            #time-tracker.loaded {
+                display: flex;
             }
 
             @media screen and (min-width: 1200px) {
@@ -130,7 +134,7 @@
 
             input.new-task {
                 margin-top: 2rem;
-                width: 95%;
+                width: 100%;
                 padding: 1rem 1.5rem;
                 box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
                 border: 0;
