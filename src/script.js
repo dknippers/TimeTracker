@@ -2,14 +2,7 @@
     var state = {
         nextTaskId: 1,
         nextTaskName: null,
-        tasksById: {},
-
-        ui: {
-            task: {
-                // task id => true/false
-                showDetails: {}
-            }
-        }
+        tasksById: {}
     };
 
     var computed = {
@@ -19,8 +12,45 @@
                 .map(id => this.tasksById[id]);
         },
 
+        rootTasks: function() {
+            return this.tasks.filter(task => task.parentId == null);
+        },
+
+        subTasks: function() {
+            const subTasks = {};
+
+            for (const task of this.tasks) {
+                if (task.parentId != null) {
+                    if (subTasks[task.parentId] == null) {
+                        subTasks[task.parentId] = [];
+                    }
+
+                    subTasks[task.parentId].push(task);
+                }
+            }
+
+            return subTasks;
+        },
+
         activeTask: function() {
             return this.tasks.find(task => task.active);
+        },
+
+        taskDurations: function() {
+            const durations = {};
+
+            for (const task of this.tasks) {
+                const duration = this.getTaskDuration(task);
+                durations[task.id] = duration;
+            }
+
+            return durations;
+        },
+
+        tasksWithDuration: function() {
+            return this.tasks.filter(
+                task => this.getTaskTotalSeconds(task) > 0
+            );
         }
     };
 
@@ -112,21 +142,16 @@
             utils.saveToStorage("time-tracker", toSave);
         },
 
-        toggleDetails: function(taskId) {
-            Vue.set(
-                this.ui.task.showDetails,
-                taskId,
-                !this.ui.task.showDetails[taskId]
-            );
-        },
-
         inputTask: function() {
-            this.addTask(this.nextTaskName);
+            this.addTask({ name: this.nextTaskName });
             this.nextTaskName = null;
         },
 
-        addTask: function(name) {
-            const newTask = this.createTask(name);
+        addTask: function(opts) {
+            const name = opts.name;
+            const parentId = opts.parentId;
+
+            const newTask = this.createTask(name, parentId);
 
             this.updateTask(
                 newTask.id,
@@ -135,17 +160,23 @@
             );
         },
 
-        createTask: function(name) {
+        createTask: function(name, parentId) {
             const id = this.nextTaskId++;
 
             return {
                 id,
+                parentId,
                 name: name || `task #${id}`,
                 active: false,
-                begin: null,
-                end: null,
                 chunks: []
             };
+        },
+
+        renameTask: function(id, newName) {
+            this.updateTask(id, task => {
+                task.name = newName;
+                return task;
+            });
         },
 
         updateTask: function(id, updateFn, doneFn) {
@@ -179,8 +210,8 @@
                 task.active = false;
 
                 const lastChunk = task.chunks[task.chunks.length - 1];
-                if (lastChunk.end == null) {
-                    lastChunk.end = Date.now();
+                if (lastChunk != null) {
+                    Vue.set(lastChunk, "end", Date.now());
                 }
 
                 return task;
@@ -189,6 +220,13 @@
 
         removeTask: function(id) {
             Vue.delete(this.tasksById, id);
+
+            const subTasks = this.subTasks[id];
+            if (Array.isArray(subTasks)) {
+                for (const subTask of subTasks) {
+                    this.removeTask(subTask.id);
+                }
+            }
         },
 
         clearAll: function() {
@@ -200,9 +238,11 @@
         },
 
         resetTask: function(id) {
-            this.updateTask(id, task =>
-                Object.assign({}, task, { chunks: [], active: false })
-            );
+            this.updateTask(id, task => {
+                task.active = false;
+                Vue.set(task, "chunks", []);
+                return task;
+            });
         },
 
         getChunkDuration: function(chunk) {
@@ -219,10 +259,22 @@
         },
 
         getTaskTotalSeconds: function(task) {
-            return task.chunks.reduce(
+            const taskSeconds = task.chunks.reduce(
                 (sum, chunk) => sum + this.getChunkElapsedSeconds(chunk),
                 0
             );
+
+            const subTasks = this.subTasks[task.id];
+            let subTasksSeconds = 0;
+
+            if (Array.isArray(subTasks)) {
+                subTasksSeconds = subTasks.reduce(
+                    (sum, subTask) => sum + this.getTaskTotalSeconds(subTask),
+                    0
+                );
+            }
+
+            return taskSeconds + subTasksSeconds;
         },
 
         getTaskDuration: function(task) {
@@ -240,6 +292,34 @@
             return classNames.join(" ");
         }
     };
+
+    Vue.component("task", {
+        props: [
+            "task",
+            "parentId",
+            "taskDurations",
+            "subTasks",
+            "getChunkDuration"
+        ],
+        template: "#task"
+    });
+
+    Vue.component("task-summary", {
+        props: ["task", "taskDurations", "subTasks", "getChunkDuration"],
+        template: "#task-summary",
+
+        data: function() {
+            return {
+                toggled: {}
+            };
+        },
+
+        methods: {
+            toggle: function(id) {
+                Vue.set(this.toggled, id, !this.toggled[id]);
+            }
+        }
+    });
 
     var app = new Vue({
         el: "#time-tracker",

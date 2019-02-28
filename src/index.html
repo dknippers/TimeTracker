@@ -8,86 +8,6 @@
         />
         <meta name="theme-color" content="#000000" />
         <title>Time Tracker</title>
-    </head>
-    <body>
-        <div id="time-tracker" :class="{ loaded: 1 }">
-            <aside>
-                <h2>Frequent</h2>
-                <hr />
-            </aside>
-            <main>
-                <h1>Time Tracker</h1>
-
-                <div>
-                    <input
-                        class="new-task"
-                        type="text"
-                        placeholder="New task"
-                        @keyup.enter="inputTask()"
-                        v-model="nextTaskName"
-                    />
-                </div>
-
-                <ul v-for="task in tasks">
-                    <li :class="{ active: task.active }" :key="task.id">
-                        <span v-text="task.name"></span>
-                        <span>Total time: {{ getTaskDuration(task) }}</span>
-
-                        <ul
-                            v-if="task.chunks.length > 0"
-                            v-for="chunk in task.chunks"
-                            :key="chunk.begin"
-                        >
-                            <li>Duration: {{ getChunkDuration(chunk) }}</li>
-                        </ul>
-
-                        <div class="controls">
-                            <button
-                                v-if="task.active"
-                                @click="stopTask(task.id)"
-                            >
-                                Stop
-                            </button>
-                            <button
-                                v-if="!task.active"
-                                @click="startTask(task.id)"
-                            >
-                                Continue
-                            </button>
-                            <button @click="removeTask(task.id)">Remove</button>
-                            <button @click="resetTask(task.id)">Reset</button>
-                        </div>
-                    </li>
-                </ul>
-
-                <div v-if="tasks.length > 0">
-                    <button type="button" @click="clearAll()">Clear all</button>
-                </div>
-            </main>
-            <aside>
-                <h2>Total</h2>
-                <hr />
-                <div
-                    v-for="task in tasks"
-                    v-if="getTaskTotalSeconds(task) > 0"
-                    class="total-list"
-                >
-                    <strong v-text="task.name"></strong>
-                    <span v-text="getTaskDuration(task)"></span>
-                    <button @click="toggleDetails(task.id)">
-                        toggle info
-                    </button>
-
-                    <ul
-                        v-for="chunk in task.chunks"
-                        v-if="ui.task.showDetails[task.id]"
-                        :key="chunk.begin"
-                    >
-                        <li>Duration: {{ getChunkDuration(chunk) }}</li>
-                    </ul>
-                </div>
-            </aside>
-        </div>
 
         <style>
             * {
@@ -122,6 +42,12 @@
                 }
             }
 
+            ul {
+                list-style-type: none;
+                padding: 0 0 0 1em;
+                margin: 0;
+            }
+
             h1 {
                 text-align: center;
                 margin: 0;
@@ -141,6 +67,15 @@
                 font-size: 1.5rem;
             }
 
+            .task {
+                border: 1px solid lightgray;
+                padding: 1em;
+            }
+
+            .task.active {
+                border: 1px solid green;
+            }
+
             main,
             aside {
                 padding: 2rem;
@@ -157,6 +92,134 @@
                 flex: 3;
             }
         </style>
+    </head>
+    <body>
+        <div id="time-tracker" :class="{ loaded: 1 }">
+            <aside>
+                <h2>Common Tasks</h2>
+                <hr />
+            </aside>
+            <main>
+                <h1>Time Tracker</h1>
+
+                <div>
+                    <input
+                        class="new-task"
+                        type="text"
+                        placeholder="New task"
+                        @keyup.enter="inputTask()"
+                        v-model="nextTaskName"
+                    />
+                </div>
+
+                <task
+                    v-for="task in rootTasks"
+                    :key="task.id"
+                    v-bind="{task, subTasks, taskDurations, getChunkDuration}"
+                    @add-task="addTask($event)"
+                    @remove-task="removeTask($event)"
+                    @reset-task="resetTask($event)"
+                    @start-task="startTask($event)"
+                    @stop-task="stopTask($event)"
+                >
+                </task>
+
+                <div v-if="tasks.length > 0">
+                    <button type="button" @click="clearAll()">Clear all</button>
+                </div>
+            </main>
+            <aside>
+                <h2>Total</h2>
+                <hr />
+
+                <task-summary
+                    v-for="task in rootTasks"
+                    :key="task.id"
+                    v-bind="{task, getChunkDuration, subTasks, taskDurations}"
+                >
+                </task-summary>
+            </aside>
+        </div>
+
+        <script type="x-template" id="task">
+            <div
+                class="task"
+                :class="{ active: task.active }"
+            >
+                <strong v-text="task.name"></strong>
+
+                <div class="controls">
+                    <button v-if="task.active" @click="$emit('stop-task', task.id)">
+                        Stop
+                    </button>
+                    <button v-if="!task.active" @click="$emit('start-task', task.id)">
+                        Continue
+                    </button>
+                    <button @click="$emit('remove-task', task.id)">Remove</button>
+                    <button @click="$emit('reset-task', task.id)">Reset</button>
+                    <button @click="$emit('add-task', { name: 'sub', parentId: task.id })">
+                        Add Sub Task
+                    </button>
+                </div>
+
+                <ul v-if="task.chunks.length || subTasks[task.id]">
+                    <li v-for="chunk in task.chunks" :key="chunk.begin">
+                        <span>{{chunk.begin}} - {{chunk.end || '...'}}</span>
+                    </li>
+
+                    <li
+                        v-if="subTasks[task.id]"
+                    >
+                        <ul>
+                            <li>
+                                <task
+                                    v-for="subTask in subTasks[task.id]"
+                                    :key="subTask.id"
+                                    v-bind="{task:subTask, subTasks, taskDurations, getChunkDuration}"
+                                    @add-task="$emit('add-task', $event)"
+                                    @remove-task="$emit('remove-task', $event)"
+                                    @reset-task="$emit('reset-task', $event)"
+                                    @start-task="$emit('start-task', $event)"
+                                    @stop-task="$emit('stop-task', $event)"
+                                >
+                                </task>
+                            </li>
+                        </ul>
+                    </li>
+
+                </ul>
+
+
+            </div>
+        </script>
+
+        <script type="x-template" id="task-summary">
+            <div class="total-list">
+                <strong v-text="task.name"></strong>
+                <span v-text="taskDurations[task.id]"></span>
+                <button @click="toggle(task.id)">
+                    toggle info
+                </button>
+
+                <ul v-if="toggled[task.id]">
+                    <li v-for="chunk in task.chunks" :key="chunk.begin">
+                        <strong>Duration: {{ getChunkDuration(chunk) }}</strong>
+                    </li>
+                    <li v-if="subTasks[task.id]">
+                        <ul>
+                            <li>
+                                <task-summary
+                                    v-for="subTask in subTasks[task.id]"
+                                    v-bind="{task:subTask, subTasks, taskDurations, getChunkDuration}"
+                                    :key="subTask.id"
+                                    :task="subTask"
+                                ></task-summary>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </script>
 
         <script src="vue-2.6.6.js"></script>
         <script src="script.js"></script>
