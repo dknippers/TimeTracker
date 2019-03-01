@@ -6,10 +6,14 @@
     };
 
     var computed = {
-        tasks: function() {
+        taskList: function() {
             return Object.keys(this.tasksById)
                 .sort()
                 .map(id => this.tasksById[id]);
+        },
+
+        tasks: function() {
+            return this.taskList.map(this.getComputedTask);
         },
 
         rootTasks: function() {
@@ -19,7 +23,7 @@
         subTasks: function() {
             const subTasks = {};
 
-            for (const task of this.tasks) {
+            for (const task of this.taskList) {
                 if (task.parentId != null) {
                     if (subTasks[task.parentId] == null) {
                         subTasks[task.parentId] = [];
@@ -34,26 +38,6 @@
 
         activeTask: function() {
             return this.tasks.find(task => task.active);
-        },
-
-        taskDurations: function() {
-            const durations = {};
-
-            for (const task of this.tasks) {
-                const duration = this.getTaskDuration(task);
-                const timeslots = task.chunks.map(chunk => ({
-                    begin: utils.formatTimestamp(chunk.begin),
-                    end: utils.formatTimestamp(chunk.end),
-                    duration: fn.getChunkDuration(chunk)
-                }));
-
-                durations[task.id] = {
-                    duration: duration,
-                    timeslots: timeslots
-                };
-            }
-
-            return durations;
         }
     };
 
@@ -171,6 +155,24 @@
     })();
 
     var fn = {
+        getComputedTask: function(task) {
+            const duration = this.getTaskDuration(task);
+            const timeslots = task.chunks.map(this.getComputedChunk);
+
+            return Object.assign({}, task, {
+                duration: duration,
+                timeslots: timeslots
+            });
+        },
+
+        getComputedChunk: function(chunk) {
+            return Object.assign({}, chunk, {
+                beginTime: utils.formatTimestamp(chunk.begin),
+                endTime: utils.formatTimestamp(chunk.end),
+                duration: fn.getChunkDuration(chunk)
+            });
+        },
+
         save: function() {
             var toSave = {};
             for (var key in state) {
@@ -336,18 +338,12 @@
     };
 
     Vue.component("task", {
-        props: [
-            "task",
-            "parentId",
-            "taskDurations",
-            "subTasks",
-            "getChunkDuration"
-        ],
+        props: ["task", "parentId", "subTasks"],
         template: "#task"
     });
 
     Vue.component("task-summary", {
-        props: ["task", "taskDurations", "subTasks", "getChunkDuration"],
+        props: ["task", "subTasks"],
         template: "#task-summary",
 
         data: function() {

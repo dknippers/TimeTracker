@@ -115,7 +115,7 @@
                 <task
                     v-for="task in rootTasks"
                     :key="task.id"
-                    v-bind="{task, subTasks, taskDurations }"
+                    v-bind="{task, subTasks }"
                     @add-task="addTask($event)"
                     @remove-task="removeTask($event)"
                     @reset-task="resetTask($event)"
@@ -135,7 +135,7 @@
                 <task-summary
                     v-for="task in rootTasks"
                     :key="task.id"
-                    v-bind="{task, subTasks, taskDurations}"
+                    v-bind="{task, subTasks }"
                 >
                 </task-summary>
             </aside>
@@ -147,7 +147,7 @@
                 :class="{ active: task.active }"
             >
                 <strong v-text="task.name"></strong>
-                <span v-text="taskDurations[task.id].duration"></span>
+                <span v-text="task.duration"></span>
 
                 <div class="controls">
                     <button v-if="task.active" @click="$emit('stop-task', task.id)">
@@ -163,9 +163,9 @@
                     </button>
                 </div>
 
-                <ul v-if="taskDurations[task.id].timeslots.length || subTasks[task.id]">
-                    <li v-for="timeslot in taskDurations[task.id].timeslots" :key="timeslot.begin">
-                        <span>{{timeslot.begin}} - {{timeslot.end || '...'}}</span>
+                <ul v-if="task.timeslots.length || subTasks[task.id]">
+                    <li v-for="timeslot in task.timeslots" :key="timeslot.begin">
+                        <span>{{timeslot.beginTime}} - {{timeslot.endTime || '...'}}</span>
                     </li>
 
                     <li
@@ -176,7 +176,7 @@
                                 <task
                                     v-for="subTask in subTasks[task.id]"
                                     :key="subTask.id"
-                                    v-bind="{task:subTask, subTasks, taskDurations }"
+                                    v-bind="{task:subTask, subTasks }"
                                     @add-task="$emit('add-task', $event)"
                                     @remove-task="$emit('remove-task', $event)"
                                     @reset-task="$emit('reset-task', $event)"
@@ -197,13 +197,13 @@
         <script type="x-template" id="task-summary">
             <div class="total-list">
                 <strong v-text="task.name"></strong>
-                <span v-text="taskDurations[task.id].duration"></span>
+                <span v-text="task.duration"></span>
                 <button @click="toggle(task.id)">
                     toggle info
                 </button>
 
                 <ul v-if="toggled[task.id]">
-                    <li v-for="timeslot in taskDurations[task.id].timeslots" :key="timeslot.begin">
+                    <li v-for="timeslot in task.timeslots" :key="timeslot.begin">
                         <strong>Duration: {{ timeslot.duration }}</strong>
                     </li>
                     <li v-if="subTasks[task.id]">
@@ -211,7 +211,7 @@
                             <li>
                                 <task-summary
                                     v-for="subTask in subTasks[task.id]"
-                                    v-bind="{task:subTask, subTasks, taskDurations }"
+                                    v-bind="{task:subTask, subTasks }"
                                     :key="subTask.id"
                                     :task="subTask"
                                 ></task-summary>
