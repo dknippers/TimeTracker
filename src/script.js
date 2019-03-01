@@ -41,16 +41,19 @@
 
             for (const task of this.tasks) {
                 const duration = this.getTaskDuration(task);
-                durations[task.id] = duration;
+                const timeslots = task.chunks.map(chunk => ({
+                    begin: utils.formatTimestamp(chunk.begin),
+                    end: utils.formatTimestamp(chunk.end),
+                    duration: fn.getChunkDuration(chunk)
+                }));
+
+                durations[task.id] = {
+                    duration: duration,
+                    timeslots: timeslots
+                };
             }
 
             return durations;
-        },
-
-        tasksWithDuration: function() {
-            return this.tasks.filter(
-                task => this.getTaskTotalSeconds(task) > 0
-            );
         }
     };
 
@@ -121,10 +124,49 @@
             }
         }
 
+        /**
+         * Zeropads the given number (or string).
+         * @param {string|number} nr Number to zeropad
+         * @param {number} length Length to pad to
+         */
+        function zeropad(nr, length) {
+            return pad(nr, "0", length);
+        }
+
+        /**
+         * Pads the given input string from the left with the given character until the input string reaches the specified length
+         * @param {number|string} input String to pad
+         * @param {string} char Pad character
+         * @param {number} length Length to pad input to
+         * @returns {string} Padded string
+         */
+        function pad(input, char, length) {
+            // Force to string
+            let str = `${input}`;
+            while (str.length < length) {
+                str = char + str;
+            }
+            return str;
+        }
+
+        function formatTimestamp(ts) {
+            if (typeof ts !== "number") {
+                return null;
+            }
+
+            const date = new Date(ts);
+
+            var hours = date.getHours();
+            var minutes = date.getMinutes();
+
+            return zeropad(hours, 2) + ":" + zeropad(minutes, 2);
+        }
+
         return {
             secondsToHms: secondsToHms,
             saveToStorage: saveToStorage,
-            getFromStorage: getFromStorage
+            getFromStorage: getFromStorage,
+            formatTimestamp: formatTimestamp
         };
     })();
 

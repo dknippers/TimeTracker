@@ -115,7 +115,7 @@
                 <task
                     v-for="task in rootTasks"
                     :key="task.id"
-                    v-bind="{task, subTasks, taskDurations, getChunkDuration}"
+                    v-bind="{task, subTasks, taskDurations }"
                     @add-task="addTask($event)"
                     @remove-task="removeTask($event)"
                     @reset-task="resetTask($event)"
@@ -135,7 +135,7 @@
                 <task-summary
                     v-for="task in rootTasks"
                     :key="task.id"
-                    v-bind="{task, getChunkDuration, subTasks, taskDurations}"
+                    v-bind="{task, subTasks, taskDurations}"
                 >
                 </task-summary>
             </aside>
@@ -147,6 +147,7 @@
                 :class="{ active: task.active }"
             >
                 <strong v-text="task.name"></strong>
+                <span v-text="taskDurations[task.id].duration"></span>
 
                 <div class="controls">
                     <button v-if="task.active" @click="$emit('stop-task', task.id)">
@@ -162,9 +163,9 @@
                     </button>
                 </div>
 
-                <ul v-if="task.chunks.length || subTasks[task.id]">
-                    <li v-for="chunk in task.chunks" :key="chunk.begin">
-                        <span>{{chunk.begin}} - {{chunk.end || '...'}}</span>
+                <ul v-if="taskDurations[task.id].timeslots.length || subTasks[task.id]">
+                    <li v-for="timeslot in taskDurations[task.id].timeslots" :key="timeslot.begin">
+                        <span>{{timeslot.begin}} - {{timeslot.end || '...'}}</span>
                     </li>
 
                     <li
@@ -175,7 +176,7 @@
                                 <task
                                     v-for="subTask in subTasks[task.id]"
                                     :key="subTask.id"
-                                    v-bind="{task:subTask, subTasks, taskDurations, getChunkDuration}"
+                                    v-bind="{task:subTask, subTasks, taskDurations }"
                                     @add-task="$emit('add-task', $event)"
                                     @remove-task="$emit('remove-task', $event)"
                                     @reset-task="$emit('reset-task', $event)"
@@ -196,21 +197,21 @@
         <script type="x-template" id="task-summary">
             <div class="total-list">
                 <strong v-text="task.name"></strong>
-                <span v-text="taskDurations[task.id]"></span>
+                <span v-text="taskDurations[task.id].duration"></span>
                 <button @click="toggle(task.id)">
                     toggle info
                 </button>
 
                 <ul v-if="toggled[task.id]">
-                    <li v-for="chunk in task.chunks" :key="chunk.begin">
-                        <strong>Duration: {{ getChunkDuration(chunk) }}</strong>
+                    <li v-for="timeslot in taskDurations[task.id].timeslots" :key="timeslot.begin">
+                        <strong>Duration: {{ timeslot.duration }}</strong>
                     </li>
                     <li v-if="subTasks[task.id]">
                         <ul>
                             <li>
                                 <task-summary
                                     v-for="subTask in subTasks[task.id]"
-                                    v-bind="{task:subTask, subTasks, taskDurations, getChunkDuration}"
+                                    v-bind="{task:subTask, subTasks, taskDurations }"
                                     :key="subTask.id"
                                     :task="subTask"
                                 ></task-summary>
