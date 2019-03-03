@@ -115,7 +115,7 @@
                 <task
                     v-for="task in rootTasks"
                     :key="task.id"
-                    v-bind="{task, subTasks }"
+                    v-bind="{ task }"
                     @add-task="addTask($event)"
                     @remove-task="removeTask($event)"
                     @reset-task="resetTask($event)"
@@ -135,7 +135,7 @@
                 <task-summary
                     v-for="task in rootTasks"
                     :key="task.id"
-                    v-bind="{task, subTasks }"
+                    v-bind="{task }"
                 >
                 </task-summary>
             </aside>
@@ -163,20 +163,20 @@
                     </button>
                 </div>
 
-                <ul v-if="task.timeslots.length || subTasks[task.id]">
+                <ul v-if="task.timeslots.length || task.subTasks.length">
                     <li v-for="timeslot in task.timeslots" :key="timeslot.begin">
                         <span>{{timeslot.beginTime}} - {{timeslot.endTime || '...'}}</span>
                     </li>
 
                     <li
-                        v-if="subTasks[task.id]"
+                        v-if="task.subTasks.length"
                     >
                         <ul>
                             <li>
                                 <task
-                                    v-for="subTask in subTasks[task.id]"
+                                    v-for="subTask in task.subTasks"
                                     :key="subTask.id"
-                                    v-bind="{task:subTask, subTasks }"
+                                    v-bind="{ task:subTask }"
                                     @add-task="$emit('add-task', $event)"
                                     @remove-task="$emit('remove-task', $event)"
                                     @reset-task="$emit('reset-task', $event)"
@@ -206,12 +206,12 @@
                     <li v-for="timeslot in task.timeslots" :key="timeslot.begin">
                         <strong>Duration: {{ timeslot.duration }}</strong>
                     </li>
-                    <li v-if="subTasks[task.id]">
+                    <li v-if="task.subTasks.length">
                         <ul>
                             <li>
                                 <task-summary
-                                    v-for="subTask in subTasks[task.id]"
-                                    v-bind="{task:subTask, subTasks }"
+                                    v-for="subTask in task.subTasks"
+                                    v-bind="{task:subTask}"
                                     :key="subTask.id"
                                     :task="subTask"
                                 ></task-summary>

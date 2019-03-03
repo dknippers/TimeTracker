@@ -37,7 +37,7 @@
         },
 
         activeTask: function() {
-            return this.tasks.find(task => task.active);
+            return this.taskList.find(task => task.active);
         }
     };
 
@@ -156,13 +156,23 @@
 
     var fn = {
         getComputedTask: function(task) {
-            const duration = this.getTaskDuration(task);
-            const timeslots = task.chunks.map(this.getComputedChunk);
-
             return Object.assign({}, task, {
-                duration: duration,
-                timeslots: timeslots
+                duration: this.getTaskDuration(task),
+                timeslots: task.chunks.map(this.getComputedChunk),
+                subTasks: this.getSubTasks(task).map(this.getComputedTask)
             });
+        },
+
+        getSubTasks: function(parentTask) {
+            const subTasks = [];
+
+            for (const task of this.taskList) {
+                if (task.parentId === parentTask.id) {
+                    subTasks.push(task);
+                }
+            }
+
+            return subTasks;
         },
 
         getComputedChunk: function(chunk) {
@@ -310,7 +320,6 @@
 
             const subTasks = this.subTasks[task.id];
             let subTasksSeconds = 0;
-
             if (Array.isArray(subTasks)) {
                 subTasksSeconds = subTasks.reduce(
                     (sum, subTask) => sum + this.getTaskTotalSeconds(subTask),
@@ -338,12 +347,12 @@
     };
 
     Vue.component("task", {
-        props: ["task", "parentId", "subTasks"],
+        props: ["task", "parentId"],
         template: "#task"
     });
 
     Vue.component("task-summary", {
-        props: ["task", "subTasks"],
+        props: ["task"],
         template: "#task-summary",
 
         data: function() {
