@@ -70,20 +70,57 @@
             }
 
             .task {
-                border: 1px solid lightgray;
                 padding: 1em;
+                margin: 1em 0;
+                box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+            }
+
+            .task .task-info {
+                position: relative;
+                padding: 0.5em 0;
+                text-align: center;
+                margin: 0 0 0.5em 0;
+                border-bottom: 2px solid lightgray;
+            }
+
+            .task .controls {
+                text-align: center;
+            }
+
+            .task .task-info .task-name {
+                font-weight: bold;
+            }
+
+            .task .task-info .task-duration {
+                position: absolute;
+                right: 0;
+                font-size: 0.9em;
+            }
+
+            .task .timeslots {
+                text-align: center;
+            }
+
+            .task .timeslots .timeslot {
+                position: relative;
+            }
+
+            .task .timeslots .timeslot .timeslot-duration {
+                right: 0;
+                position: absolute;
+                font-size: 0.9em;
             }
 
             .task.active {
-                border: 1px solid green;
+                box-shadow: 0 0 4px 0 green, 0 0 2px 0 green;
             }
 
             .task.dropzone {
-                border: 2px dashed #ce5c00;
+                box-shadow: 0 0 2px 2px #204a87;
             }
 
             .task.dragging {
-                border: 1px solid #3465a4;
+                opacity: 0.5;
             }
 
             main,
@@ -158,8 +195,10 @@
                 draggable="true"
                 :class="{ active: task.active, dropzone: dropzone, dragging: dragging }"
             >
-                <strong v-text="task.name"></strong>
-                <span v-text="task.duration"></span>
+                <div class="task-info">
+                    <span class="task-name">{{task.name}}</span>
+                    <span class="task-duration" v-text="task.duration"></span>
+                </div>
 
                 <div class="controls">
                     <button v-if="task.active" @click="$emit('stop-task', task.id)">
@@ -175,35 +214,28 @@
                     </button>
                 </div>
 
-                <ul v-if="task.timeslots.length || task.subTasks.length">
-                    <li v-for="timeslot in task.timeslots" :key="timeslot.begin">
-                        <span>{{timeslot.beginTime}} - {{timeslot.endTime || '...'}}</span>
-                    </li>
+                <div class="timeslots" v-if="task.timeslots.length">
+                    <div v-for="timeslot in task.timeslots" :key="timeslot.begin" class="timeslot">
+                        <span>{{timeslot.beginTime}} - </span>
+                        <span v-if="timeslot.endTime">{{timeslot.endTime}}</span>
+                        <span v-if="timeslot.endTime" class="timeslot-duration">{{timeslot.duration}}</span>
+                        <span v-else>...</span>
+                    </div>
+                </div>
 
-                    <li
-                        v-if="task.subTasks.length"
-                    >
-                        <ul>
-                            <li>
-                                <task
-                                    v-for="subTask in task.subTasks"
-                                    :key="subTask.id"
-                                    v-bind="{ task:subTask }"
-                                    @add-task="$emit('add-task', $event)"
-                                    @remove-task="$emit('remove-task', $event)"
-                                    @reset-task="$emit('reset-task', $event)"
-                                    @start-task="$emit('start-task', $event)"
-                                    @stop-task="$emit('stop-task', $event)"
-                                    @set-parent-id="$emit('set-parent-id', $event)"
-                                >
-                                </task>
-                            </li>
-                        </ul>
-                    </li>
-
-                </ul>
-
-
+                <div class="subtasks" v-if="task.subTasks.length">
+                    <task
+                        v-for="subTask in task.subTasks"
+                        :key="subTask.id"
+                        v-bind="{ task:subTask }"
+                        @add-task="$emit('add-task', $event)"
+                        @remove-task="$emit('remove-task', $event)"
+                        @reset-task="$emit('reset-task', $event)"
+                        @start-task="$emit('start-task', $event)"
+                        @stop-task="$emit('stop-task', $event)"
+                        @set-parent-id="$emit('set-parent-id', $event)"
+                    />
+                </div>
             </div>
         </script>
 
