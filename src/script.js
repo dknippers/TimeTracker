@@ -1,6 +1,8 @@
 (function() {
+    const initialNextTaskId = 1;
+
     var state = {
-        nextTaskId: 1,
+        nextTaskId: initialNextTaskId,
         nextTaskName: null,
         tasksById: {}
     };
@@ -233,8 +235,50 @@
             });
         },
 
+        setParentId: function(opts) {
+            var taskId = opts.taskId;
+            var parentId = opts.parentId;
+
+            if (taskId != null && parentId != null && taskId !== parentId) {
+                const task = this.tasksById[taskId];
+                const parent = this.tasksById[parentId];
+
+                if (
+                    task != null &&
+                    parent != null &&
+                    task.parentId !== parent.id
+                ) {
+                    if (parent.parentId === task.id) {
+                        this.updateTask(parentId, task => {
+                            Vue.delete(task, "parentId");
+                            return task;
+                        });
+                    }
+
+                    this.updateTask(taskId, task => {
+                        Vue.set(task, "parentId", parentId);
+                        return task;
+                    });
+                }
+            }
+        },
+
+        onDrop: function(ev) {
+            const taskId = ev.dataTransfer.getData("taskId");
+
+            this.updateTask(taskId, task => {
+                Vue.delete(task, "parentId");
+                return task;
+            });
+        },
+
+        onDragOver: function(ev) {
+            ev.preventDefault();
+        },
+
         updateTask: function(id, updateFn, doneFn) {
             const currentTask = this.tasksById[id];
+
             const newTask = updateFn(currentTask);
             Vue.set(this.tasksById, newTask.id, newTask);
             if (typeof doneFn === "function") {
@@ -281,13 +325,16 @@
                     this.removeTask(subTask.id);
                 }
             }
+
+            if (this.tasks.length === 0) {
+                this.nextTaskId = initialNextTaskId;
+            }
         },
 
         clearAll: function() {
-            this.nextTaskId = 1;
+            this.nextTaskId = initialNextTaskId;
             for (var id in this.tasksById) {
                 Vue.delete(this.tasksById, id);
-                Vue.delete(this.ui.task.showDetails, id);
             }
         },
 
@@ -348,7 +395,74 @@
 
     Vue.component("task", {
         props: ["task", "parentId"],
-        template: "#task"
+        data: function() {
+            return {
+                dropzone: false,
+                dragging: false
+            };
+        },
+        template: "#task",
+        methods: {
+            onDragStart: function(ev) {
+                ev.stopPropagation();
+                ev.dataTransfer.dropEffect = "move";
+                ev.dataTransfer.setData("taskId", this.task.id);
+                ev.dataTransfer.setData("parentId", this.task.parentId);
+                this.dragging = true;
+            },
+
+            onDragEnd: function(ev) {
+                ev.preventDefault();
+                this.dragging = false;
+            },
+
+            onDragOver: function(ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+
+                this.dropzone = true;
+            },
+
+            onDragLeave: function(ev) {
+                ev.preventDefault();
+                this.dropzone = false;
+            },
+
+            onDrop: function(ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+
+                this.dropzone = false;
+
+                const droppedTaskId = parseInt(
+                    ev.dataTransfer.getData("taskId"),
+                    10
+                );
+
+                if (!isNaN(droppedTaskId)) {
+                    this.$emit("set-parent-id", {
+                        taskId: droppedTaskId,
+                        parentId: this.task.id
+                    });
+                }
+            }
+        },
+
+        mounted: function() {
+            this.$el.addEventListener("dragstart", this.onDragStart);
+            this.$el.addEventListener("dragend", this.onDragEnd);
+            this.$el.addEventListener("dragover", this.onDragOver);
+            this.$el.addEventListener("dragleave", this.onDragLeave);
+            this.$el.addEventListener("drop", this.onDrop);
+        },
+
+        beforeDestroy: function() {
+            this.$el.removeEventListener("dragstart", this.onDragStart);
+            this.$el.removeEventListener("dragend", this.onDragEnd);
+            this.$el.removeEventListener("dragover", this.onDragOver);
+            this.$el.removeEventListener("drop", this.onDrop);
+            this.$el.removeEventListener("dragleave", this.onDragLeave);
+        }
     });
 
     Vue.component("task-summary", {
@@ -379,6 +493,16 @@
             if (oldState != null) {
                 Object.assign(state, oldState);
             }
+        },
+
+        mounted: function() {
+            this.$el.addEventListener("drop", this.onDrop);
+            this.$el.addEventListener("dragover", this.onDragOver);
+        },
+
+        beforeDestroy: function() {
+            this.$el.removeEventListener("drop", this.onDrop);
+            this.$el.removeEventListener("dragover", this.onDragOver);
         },
 
         updated: function() {

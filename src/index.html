@@ -78,6 +78,14 @@
                 border: 1px solid green;
             }
 
+            .task.dropzone {
+                border: 2px dashed #ce5c00;
+            }
+
+            .task.dragging {
+                border: 1px solid #3465a4;
+            }
+
             main,
             aside {
                 padding: 2rem;
@@ -123,6 +131,7 @@
                     @reset-task="resetTask($event)"
                     @start-task="startTask($event)"
                     @stop-task="stopTask($event)"
+                    @set-parent-id="setParentId($event)"
                 >
                 </task>
 
@@ -146,7 +155,8 @@
         <script type="x-template" id="task">
             <div
                 class="task"
-                :class="{ active: task.active }"
+                draggable="true"
+                :class="{ active: task.active, dropzone: dropzone, dragging: dragging }"
             >
                 <strong v-text="task.name"></strong>
                 <span v-text="task.duration"></span>
@@ -184,6 +194,7 @@
                                     @reset-task="$emit('reset-task', $event)"
                                     @start-task="$emit('start-task', $event)"
                                     @stop-task="$emit('stop-task', $event)"
+                                    @set-parent-id="$emit('set-parent-id', $event)"
                                 >
                                 </task>
                             </li>
