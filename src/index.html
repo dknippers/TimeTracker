@@ -18,7 +18,13 @@
             }
 
             html {
-                font-size: 3vw;
+                font-size: 100%;
+            }
+
+            @media screen and (max-width: 600px) {
+                #time-tracker {
+                    font-size: calc(12px + 4 * ((100vw - 200px) / 600));
+                }
             }
 
             body {
@@ -28,7 +34,7 @@
             }
 
             button {
-                font-size: 0.8rem;
+                font-size: 0.8em;
             }
 
             #time-tracker {
@@ -44,12 +50,6 @@
             #time-tracker.loaded {
                 display: flex;
                 justify-content: center;
-            }
-
-            @media screen and (min-width: 600px) {
-                html {
-                    font-size: 16px;
-                }
             }
 
             ul {
@@ -73,11 +73,11 @@
             }
 
             input.new-task {
-                margin-top: 1.5rem;
-                font-size: 1rem;
+                margin-top: 1.5em;
+                font-size: 1em;
                 width: 100%;
                 max-width: 300px;
-                padding: 0.8rem 1.2rem;
+                padding: 0.8em 1.2em;
                 box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
                 border: 0;
             }
@@ -104,6 +104,10 @@
                 font-weight: bold;
             }
 
+            .task .task-info .task-name.edit {
+                padding: 0.25em 0.5em;
+            }
+
             .task .task-info .task-duration {
                 position: absolute;
                 right: 0;
@@ -112,12 +116,12 @@
 
             .task .timeslots {
                 text-align: center;
-                margin-top: 0.5rem;
+                margin-top: 0.5em;
             }
 
             .task .timeslots .timeslot {
                 position: relative;
-                margin: 0.25rem 0 0 0;
+                margin: 0.25em 0 0 0;
             }
 
             .task .timeslots .timeslot .timeslot-duration {
@@ -188,7 +192,9 @@
                 :class="{ active: task.active, dropzone: dropzone, dragging: dragging }"
             >
                 <div class="task-info">
-                    <span class="task-name">{{task.name}}</span>
+                    <span v-if="!editName" class="task-name" @click="editName = true">{{task.name}}</span>
+                    <input type="text" class="task-name edit" placeholder="Task name"
+                        v-if="editName" v-model="task._source.name" @keyup.enter="editName = false" />
                     <span class="task-duration" v-text="task.duration"></span>
                 </div>
 
@@ -201,7 +207,7 @@
                     </button>
                     <button @click="$emit('remove-task', task.id)">Remove</button>
                     <button @click="$emit('reset-task', task.id)">Reset</button>
-                    <button @click="$emit('add-task', { name: 'sub', parentId: task.id })">
+                    <button @click="$emit('add-task', { parentId: task.id })">
                         Add Sub Task
                     </button>
                 </div>

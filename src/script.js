@@ -201,7 +201,10 @@
             return Object.assign({}, task, {
                 duration: this.getTaskDuration(task),
                 timeslots: timeslots.map(this.getComputedTimeslot),
-                subTasks: this.getSubTasks(task).map(this.getComputedTask)
+                subTasks: this.getSubTasks(task).map(this.getComputedTask),
+
+                // Reference to source object
+                _source: task
             });
         },
 
@@ -262,7 +265,7 @@
             return {
                 id,
                 parentId,
-                name: name || `task #${id}`,
+                name: name,
                 active: false
             };
         },
@@ -475,13 +478,15 @@
         data: function() {
             return {
                 dropzone: false,
-                dragging: false
+                dragging: false,
+                editName: false
             };
         },
         template: "#task",
         methods: {
             onDragStart: function(ev) {
                 ev.stopPropagation();
+
                 ev.dataTransfer.dropEffect = "move";
                 ev.dataTransfer.setData("taskId", this.task.id);
                 ev.dataTransfer.setData("parentId", this.task.parentId);
@@ -531,6 +536,10 @@
             this.$el.addEventListener("dragover", this.onDragOver);
             this.$el.addEventListener("dragleave", this.onDragLeave);
             this.$el.addEventListener("drop", this.onDrop);
+
+            if (this.task.name == null || this.task.name.length === 0) {
+                this.editName = true;
+            }
         },
 
         beforeDestroy: function() {
