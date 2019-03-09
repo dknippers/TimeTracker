@@ -216,8 +216,8 @@
                     <div v-for="timeslot in task.timeslots" :key="timeslot.begin" class="timeslot">
                         <span>{{timeslot.beginTime}} - </span>
                         <span v-if="timeslot.endTime">{{timeslot.endTime}}</span>
-                        <span v-if="timeslot.endTime" class="timeslot-duration">{{timeslot.duration}}</span>
                         <span v-else>...</span>
+                        <span class="timeslot-duration">{{timeslot.duration}}</span>
                     </div>
                 </div>
 

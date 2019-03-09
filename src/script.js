@@ -5,7 +5,9 @@
         nextId: initialId,
         nextTaskName: null,
         tasksById: {},
-        timeslotsById: {}
+        timeslotsById: {},
+
+        now: Date.now()
     };
 
     var computed = {
@@ -224,14 +226,14 @@
             return Object.assign({}, ts, {
                 beginTime: utils.formatTimestamp(ts.begin),
                 endTime: utils.formatTimestamp(ts.end),
-                duration: fn.getTimeslotDuration(ts)
+                duration: this.getTimeslotDuration(ts)
             });
         },
 
         save: function() {
             var toSave = {};
             for (var key in state) {
-                if (key.indexOf("__") === 0) {
+                if (key.indexOf("__") === 0 || key === "now") {
                     continue;
                 }
 
@@ -427,15 +429,19 @@
 
         getTimeslotDuration: function(timeslot) {
             const elapsedSeconds = this.getTimeslotSeconds(timeslot);
-            return utils.secondsToHms(Math.round(elapsedSeconds));
+            return utils.secondsToHms(Math.round(elapsedSeconds), {
+                includeSeconds: true
+            });
         },
 
         getTimeslotSeconds: function(ts) {
-            if (ts == null || ts.begin == null || ts.end == null) {
+            if (ts == null || ts.begin == null) {
                 return 0;
             }
 
-            return (ts.end - ts.begin) / 1000;
+            const end = ts.end || this.now;
+
+            return (end - ts.begin) / 1000;
         },
 
         getTaskTotalSeconds: function(task) {
@@ -459,7 +465,9 @@
 
         getTaskDuration: function(task) {
             const elapsedSeconds = this.getTaskTotalSeconds(task);
-            return utils.secondsToHms(Math.round(elapsedSeconds));
+            return utils.secondsToHms(Math.round(elapsedSeconds), {
+                includeSeconds: true
+            });
         },
 
         getTaskClass: function(task) {
@@ -567,6 +575,12 @@
         mounted: function() {
             this.$el.addEventListener("drop", this.onDrop);
             this.$el.addEventListener("dragover", this.onDragOver);
+
+            setInterval(() => {
+                this._$dontSave = 1;
+                this.now = Date.now();
+                Vue.nextTick(() => delete this._$dontSave);
+            }, 1000);
         },
 
         beforeDestroy: function() {
@@ -575,7 +589,9 @@
         },
 
         updated: function() {
-            this.save();
+            if (!this._$dontSave) {
+                this.save();
+            }
         }
     });
 })();
