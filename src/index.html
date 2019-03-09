@@ -18,29 +18,37 @@
             }
 
             html {
-                font-size: 1vw;
+                font-size: 3vw;
             }
 
             body {
                 padding: 0;
                 margin: 0;
+                background-color: #2e3436;
+            }
+
+            button {
+                font-size: 0.8rem;
             }
 
             #time-tracker {
-                padding: 2rem;
+                padding: 2em;
+                margin: 2em auto 0 auto;
                 display: none;
-                max-width: 1200px;
-                margin: 0 auto;
-                font-size: 1.5rem;
+                max-width: 600px;
+                color: #2e3436;
+                background-color: white;
+                border-radius: 5px;
             }
 
             #time-tracker.loaded {
                 display: flex;
+                justify-content: center;
             }
 
-            @media screen and (min-width: 1200px) {
+            @media screen and (min-width: 600px) {
                 html {
-                    font-size: 12px;
+                    font-size: 16px;
                 }
             }
 
@@ -60,18 +68,23 @@
                 margin: 0;
             }
 
+            .new-task-container {
+                text-align: center;
+            }
+
             input.new-task {
-                margin-top: 2rem;
+                margin-top: 1.5rem;
+                font-size: 1rem;
                 width: 100%;
-                padding: 1rem 1.5rem;
+                max-width: 300px;
+                padding: 0.8rem 1.2rem;
                 box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
                 border: 0;
-                font-size: 1.5rem;
             }
 
             .task {
-                padding: 1em;
-                margin: 1em 0;
+                padding: 1.5em;
+                margin: 1.5em 0;
                 box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
             }
 
@@ -99,10 +112,12 @@
 
             .task .timeslots {
                 text-align: center;
+                margin-top: 0.5rem;
             }
 
             .task .timeslots .timeslot {
                 position: relative;
+                margin: 0.25rem 0 0 0;
             }
 
             .task .timeslots .timeslot .timeslot-duration {
@@ -123,16 +138,8 @@
                 opacity: 0.5;
             }
 
-            main,
-            aside {
-                padding: 2rem;
-            }
-
             main {
                 flex: 5;
-                border-color: lightgray;
-                border-width: 0 1px 0 1px;
-                border-style: solid;
             }
 
             aside {
@@ -142,14 +149,10 @@
     </head>
     <body>
         <div id="time-tracker" :class="{ loaded: 1 }">
-            <aside>
-                <h2>Common Tasks</h2>
-                <hr />
-            </aside>
             <main>
                 <h1>Time Tracker</h1>
 
-                <div>
+                <div class="new-task-container">
                     <input
                         class="new-task"
                         type="text"
@@ -176,17 +179,6 @@
                     <button type="button" @click="clearAll()">Clear all</button>
                 </div>
             </main>
-            <aside>
-                <h2>Total</h2>
-                <hr />
-
-                <task-summary
-                    v-for="task in rootTasks"
-                    :key="task.id"
-                    v-bind="{task }"
-                >
-                </task-summary>
-            </aside>
         </div>
 
         <script type="x-template" id="task">
@@ -236,34 +228,6 @@
                         @set-parent-id="$emit('set-parent-id', $event)"
                     />
                 </div>
-            </div>
-        </script>
-
-        <script type="x-template" id="task-summary">
-            <div class="total-list">
-                <strong v-text="task.name"></strong>
-                <span v-text="task.duration"></span>
-                <button @click="toggle(task.id)">
-                    toggle info
-                </button>
-
-                <ul v-if="toggled[task.id]">
-                    <li v-for="timeslot in task.timeslots" :key="timeslot.begin">
-                        <strong>Duration: {{ timeslot.duration }}</strong>
-                    </li>
-                    <li v-if="task.subTasks.length">
-                        <ul>
-                            <li>
-                                <task-summary
-                                    v-for="subTask in task.subTasks"
-                                    v-bind="{task:subTask}"
-                                    :key="subTask.id"
-                                    :task="subTask"
-                                ></task-summary>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
             </div>
         </script>
 

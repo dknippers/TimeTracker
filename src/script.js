@@ -1,17 +1,36 @@
 (function() {
-    const initialNextTaskId = 1;
+    const initialId = 1;
 
     var state = {
-        nextTaskId: initialNextTaskId,
+        nextId: initialId,
         nextTaskName: null,
-        tasksById: {}
+        tasksById: {},
+        timeslotsById: {}
     };
 
     var computed = {
         taskList: function() {
-            return Object.keys(this.tasksById)
-                .sort()
-                .map(id => this.tasksById[id]);
+            return utils.keyedObjectToArray(this.tasksById, t => t.id);
+        },
+
+        timeslots: function() {
+            return utils.keyedObjectToArray(this.timeslotsById, ts => ts.begin);
+        },
+
+        timeslotsByTask: function() {
+            const timeslotsByTask = {};
+
+            for (const timeslot of this.timeslots) {
+                if (timeslot.taskId != null) {
+                    if (timeslotsByTask[timeslot.taskId] == null) {
+                        timeslotsByTask[timeslot.taskId] = [];
+                    }
+
+                    timeslotsByTask[timeslot.taskId].push(timeslot);
+                }
+            }
+
+            return timeslotsByTask;
         },
 
         tasks: function() {
@@ -148,19 +167,40 @@
             return zeropad(hours, 2) + ":" + zeropad(minutes, 2);
         }
 
+        function keyedObjectToArray(obj, sortOn) {
+            const array = Object.keys(obj).map(key => obj[key]);
+            if (typeof sortOn === "function") {
+                return sort(array, sortOn);
+            } else {
+                return array;
+            }
+        }
+
+        function sort(array, selector) {
+            return array.sort((a, b) => {
+                const vA = selector(a);
+                const vB = selector(b);
+                return vA > vB ? 1 : vB > vA ? -1 : 0;
+            });
+        }
+
         return {
             secondsToHms: secondsToHms,
             saveToStorage: saveToStorage,
             getFromStorage: getFromStorage,
-            formatTimestamp: formatTimestamp
+            formatTimestamp: formatTimestamp,
+            sort: sort,
+            keyedObjectToArray
         };
     })();
 
     var fn = {
         getComputedTask: function(task) {
+            const timeslots = this.timeslotsByTask[task.id] || [];
+
             return Object.assign({}, task, {
                 duration: this.getTaskDuration(task),
-                timeslots: task.chunks.map(this.getComputedChunk),
+                timeslots: timeslots.map(this.getComputedTimeslot),
                 subTasks: this.getSubTasks(task).map(this.getComputedTask)
             });
         },
@@ -177,11 +217,11 @@
             return subTasks;
         },
 
-        getComputedChunk: function(chunk) {
-            return Object.assign({}, chunk, {
-                beginTime: utils.formatTimestamp(chunk.begin),
-                endTime: utils.formatTimestamp(chunk.end),
-                duration: fn.getChunkDuration(chunk)
+        getComputedTimeslot: function(ts) {
+            return Object.assign({}, ts, {
+                beginTime: utils.formatTimestamp(ts.begin),
+                endTime: utils.formatTimestamp(ts.end),
+                duration: fn.getTimeslotDuration(ts)
             });
         },
 
@@ -217,14 +257,13 @@
         },
 
         createTask: function(name, parentId) {
-            const id = this.nextTaskId++;
+            const id = this.nextId++;
 
             return {
                 id,
                 parentId,
                 name: name || `task #${id}`,
-                active: false,
-                chunks: []
+                active: false
             };
         },
 
@@ -294,7 +333,7 @@
 
             this.updateTask(id, task => {
                 task.active = true;
-                task.chunks.push({ begin: Date.now() });
+                this.createTimeslot(id);
                 return task;
             });
         },
@@ -306,10 +345,10 @@
                 }
 
                 task.active = false;
-
-                const lastChunk = task.chunks[task.chunks.length - 1];
-                if (lastChunk != null) {
-                    Vue.set(lastChunk, "end", Date.now());
+                const timeslots = this.timeslotsByTask[id] || [];
+                const lastSlot = timeslots[timeslots.length - 1];
+                if (lastSlot != null) {
+                    Vue.set(lastSlot, "end", Date.now());
                 }
 
                 return task;
@@ -326,42 +365,80 @@
                 }
             }
 
+            const timeslots = this.timeslotsByTask[id];
+            if (Array.isArray(timeslots)) {
+                for (const timeslot of timeslots) {
+                    Vue.delete(this.timeslotsById, timeslot.id);
+                }
+            }
+
             if (this.tasks.length === 0) {
-                this.nextTaskId = initialNextTaskId;
+                this.nextId = initialId;
             }
         },
 
+        createTimeslot: function(taskId) {
+            const id = this.nextId++;
+
+            const timeslot = {
+                id,
+                taskId,
+                begin: Date.now()
+            };
+
+            Vue.set(this.timeslotsById, id, timeslot);
+
+            return timeslot;
+        },
+
+        removeTimeslot: function(id) {
+            Vue.delete(this.timeslotsById, id);
+        },
+
         clearAll: function() {
-            this.nextTaskId = initialNextTaskId;
-            for (var id in this.tasksById) {
-                Vue.delete(this.tasksById, id);
+            this.nextId = initialId;
+            for (var taskId in this.tasksById) {
+                Vue.delete(this.tasksById, taskId);
+            }
+            for (var tsId in this.timeslotsById) {
+                Vue.delete(this.timeslotsById, tsId);
             }
         },
 
         resetTask: function(id) {
             this.updateTask(id, task => {
                 task.active = false;
-                Vue.set(task, "chunks", []);
+                this.clearTimeslots(id);
                 return task;
             });
         },
 
-        getChunkDuration: function(chunk) {
-            const elapsedSeconds = this.getChunkElapsedSeconds(chunk);
+        clearTimeslots: function(taskId) {
+            const timeslots = this.timeslotsByTask[taskId];
+            if (Array.isArray(timeslots)) {
+                for (const timeslot of timeslots) {
+                    Vue.delete(this.timeslotsById, timeslot.id);
+                }
+            }
+        },
+
+        getTimeslotDuration: function(timeslot) {
+            const elapsedSeconds = this.getTimeslotSeconds(timeslot);
             return utils.secondsToHms(Math.round(elapsedSeconds));
         },
 
-        getChunkElapsedSeconds: function(chunk) {
-            if (chunk == null || chunk.begin == null || chunk.end == null) {
+        getTimeslotSeconds: function(ts) {
+            if (ts == null || ts.begin == null || ts.end == null) {
                 return 0;
             }
 
-            return (chunk.end - chunk.begin) / 1000;
+            return (ts.end - ts.begin) / 1000;
         },
 
         getTaskTotalSeconds: function(task) {
-            const taskSeconds = task.chunks.reduce(
-                (sum, chunk) => sum + this.getChunkElapsedSeconds(chunk),
+            const timeslots = this.timeslotsByTask[task.id] || [];
+            const taskSeconds = timeslots.reduce(
+                (sum, ts) => sum + this.getTimeslotSeconds(ts),
                 0
             );
 
@@ -462,23 +539,6 @@
             this.$el.removeEventListener("dragover", this.onDragOver);
             this.$el.removeEventListener("drop", this.onDrop);
             this.$el.removeEventListener("dragleave", this.onDragLeave);
-        }
-    });
-
-    Vue.component("task-summary", {
-        props: ["task"],
-        template: "#task-summary",
-
-        data: function() {
-            return {
-                toggled: {}
-            };
-        },
-
-        methods: {
-            toggle: function(id) {
-                Vue.set(this.toggled, id, !this.toggled[id]);
-            }
         }
     });
 
