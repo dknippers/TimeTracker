@@ -54,8 +54,8 @@
             >
                 <div class="task-info">
                     <span v-if="!editName" class="task-name" @click="editName = true">{{task.name}}</span>
-                    <input type="text" class="task-name edit" placeholder="Task name"
-                        v-if="editName" v-model="task._source.name" @keyup.enter="editName = false" />
+                    <input type="text" class="task-name edit" placeholder="Task name" v-focus required
+                        v-if="editName" v-model="task._source.name" @keyup.enter="completeEdit()" />
                     <span class="task-duration" v-text="formatDuration(task.duration, { showZero: false })"></span>
                 </div>
 

@@ -498,6 +498,28 @@
 
     Vue.component("task", {
         props: ["task", "parentId"],
+        template: "#task",
+
+        mounted: function() {
+            this.$el.addEventListener("dragstart", this.onDragStart);
+            this.$el.addEventListener("dragend", this.onDragEnd);
+            this.$el.addEventListener("dragover", this.onDragOver);
+            this.$el.addEventListener("dragleave", this.onDragLeave);
+            this.$el.addEventListener("drop", this.onDrop);
+
+            if (!this.task.name) {
+                this.editName = true;
+            }
+        },
+
+        beforeDestroy: function() {
+            this.$el.removeEventListener("dragstart", this.onDragStart);
+            this.$el.removeEventListener("dragend", this.onDragEnd);
+            this.$el.removeEventListener("dragover", this.onDragOver);
+            this.$el.removeEventListener("drop", this.onDrop);
+            this.$el.removeEventListener("dragleave", this.onDragLeave);
+        },
+
         data: function() {
             return {
                 dropzone: false,
@@ -509,7 +531,15 @@
                 editEnd: {}
             };
         },
-        template: "#task",
+
+        directives: {
+            focus: {
+                inserted: function(el) {
+                    el.focus();
+                }
+            }
+        },
+
         methods: {
             formatDuration: function(
                 duration,
@@ -619,27 +649,13 @@
                         parentId: this.task.id
                     });
                 }
+            },
+
+            completeEdit: function() {
+                if (this.task.name) {
+                    this.editName = false;
+                }
             }
-        },
-
-        mounted: function() {
-            this.$el.addEventListener("dragstart", this.onDragStart);
-            this.$el.addEventListener("dragend", this.onDragEnd);
-            this.$el.addEventListener("dragover", this.onDragOver);
-            this.$el.addEventListener("dragleave", this.onDragLeave);
-            this.$el.addEventListener("drop", this.onDrop);
-
-            if (this.task.name == null || this.task.name.length === 0) {
-                this.editName = true;
-            }
-        },
-
-        beforeDestroy: function() {
-            this.$el.removeEventListener("dragstart", this.onDragStart);
-            this.$el.removeEventListener("dragend", this.onDragEnd);
-            this.$el.removeEventListener("dragover", this.onDragOver);
-            this.$el.removeEventListener("drop", this.onDrop);
-            this.$el.removeEventListener("dragleave", this.onDragLeave);
         }
     });
 
