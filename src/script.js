@@ -60,7 +60,7 @@
         },
 
         activeTask: function() {
-            return this.taskList.find(task => task.active);
+            return this.tasks.find(task => task.isActive);
         }
     };
 
@@ -200,10 +200,15 @@
         getComputedTask: function(task) {
             const timeslots = this.timeslotsByTask[task.id] || [];
 
+            const isActive =
+                timeslots.length > 0 &&
+                timeslots[timeslots.length - 1].end == null;
+
             return Object.assign({}, task, {
                 duration: this.getTaskDuration(task),
                 timeslots: timeslots.map(this.getComputedTimeslot),
                 subTasks: this.getSubTasks(task).map(this.getComputedTask),
+                isActive,
 
                 // Reference to source object
                 _source: task
@@ -267,8 +272,7 @@
             return {
                 id,
                 parentId,
-                name: name,
-                active: false
+                name: name
             };
         },
 
@@ -337,7 +341,6 @@
             }
 
             this.updateTask(id, task => {
-                task.active = true;
                 this.createTimeslot(id);
                 return task;
             });
@@ -345,14 +348,13 @@
 
         stopTask: function(id) {
             this.updateTask(id, task => {
-                if (task == null || task.active === false) {
+                if (task == null) {
                     return;
                 }
 
-                task.active = false;
                 const timeslots = this.timeslotsByTask[id] || [];
                 const lastSlot = timeslots[timeslots.length - 1];
-                if (lastSlot != null) {
+                if (lastSlot != null && lastSlot.end == null) {
                     Vue.set(lastSlot, "end", Date.now());
                 }
 
@@ -412,7 +414,6 @@
 
         resetTask: function(id) {
             this.updateTask(id, task => {
-                task.active = false;
                 this.clearTimeslots(id);
                 return task;
             });
@@ -468,16 +469,6 @@
             return utils.secondsToHms(Math.round(elapsedSeconds), {
                 includeSeconds: true
             });
-        },
-
-        getTaskClass: function(task) {
-            const classNames = ["task"];
-
-            if (task.active) {
-                classNames.push("active");
-            }
-
-            return classNames.join(" ");
         }
     };
 

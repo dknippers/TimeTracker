@@ -189,7 +189,7 @@
             <div
                 class="task"
                 draggable="true"
-                :class="{ active: task.active, dropzone: dropzone, dragging: dragging }"
+                :class="{ active: task.isActive, dropzone: dropzone, dragging: dragging }"
             >
                 <div class="task-info">
                     <span v-if="!editName" class="task-name" @click="editName = true">{{task.name}}</span>
@@ -199,10 +199,10 @@
                 </div>
 
                 <div class="controls">
-                    <button v-if="task.active" @click="$emit('stop-task', task.id)">
+                    <button v-if="task.isActive" @click="$emit('stop-task', task.id)">
                         Stop
                     </button>
-                    <button v-if="!task.active" @click="$emit('start-task', task.id)">
+                    <button v-if="!task.isActive" @click="$emit('start-task', task.id)">
                         Continue
                     </button>
                     <button @click="$emit('remove-task', task.id)">Remove</button>
