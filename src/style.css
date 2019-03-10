@@ -1,0 +1,156 @@
+* {
+    box-sizing: border-box;
+    font-family: Calibri, sans-serif;
+}
+
+html {
+    font-size: 100%;
+}
+
+@media screen and (max-width: 600px) {
+    #time-tracker {
+        font-size: calc(12px + 4 * ((100vw - 200px) / 600));
+    }
+}
+
+body {
+    padding: 0;
+    margin: 0;
+    background-color: #2e3436;
+}
+
+button {
+    font-size: 0.8em;
+    padding: 0.25em 0.5em;
+    background: none;
+    border: 1px outset lightgray;
+    box-shadow: 1px 1px 1px 0 lightgrey;
+    outline: none;
+}
+
+button:hover {
+    cursor: pointer;
+    background-color: #2e3436;
+    color: white;
+}
+
+#time-tracker {
+    padding: 2em;
+    margin: 2em auto 0 auto;
+    display: none;
+    max-width: 600px;
+    color: #2e3436;
+    background-color: white;
+    border-radius: 5px;
+}
+
+#time-tracker.loaded {
+    display: flex;
+    justify-content: center;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0 0 0 1em;
+    margin: 0;
+}
+
+h1 {
+    text-align: center;
+    margin: 0;
+}
+
+h2 {
+    text-align: center;
+    margin: 0;
+}
+
+.new-task-container {
+    text-align: center;
+}
+
+input.new-task {
+    margin-top: 1.5em;
+    font-size: 1em;
+    width: 100%;
+    max-width: 300px;
+    padding: 0.8em 1.2em;
+    box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+    border: 0;
+}
+
+.task {
+    padding: 1.5em;
+    margin: 1.5em 0;
+    box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+}
+
+.task .task-info {
+    position: relative;
+    padding: 0.5em 0;
+    text-align: center;
+    margin: 0 0 0.5em 0;
+    border-bottom: 2px solid lightgray;
+}
+
+.task .controls {
+    text-align: center;
+}
+
+.task .task-info .task-name {
+    font-weight: bold;
+}
+
+.task .task-info .task-name.edit {
+    padding: 0.25em 0.5em;
+}
+
+.task .task-info .task-duration {
+    position: absolute;
+    right: 0;
+    font-size: 0.9em;
+}
+
+.task .timeslots {
+    text-align: center;
+    margin-top: 0.5em;
+}
+
+.task .timeslots .timeslot {
+    position: relative;
+    margin: 0.25em 0 0 0;
+}
+
+.task .timeslots .timeslot .timestamps {
+    display: inline-block;
+}
+
+.task .timeslots .timeslot .timestamps .edit-time {
+    width: 5em;
+}
+
+.task .timeslots .timeslot .timeslot-duration {
+    right: 0;
+    position: absolute;
+    font-size: 0.9em;
+}
+
+.task.active {
+    box-shadow: 0 0 4px 0 green, 0 0 2px 0 green;
+}
+
+.task.dropzone {
+    box-shadow: 0 0 2px 2px #204a87;
+}
+
+.task.dragging {
+    opacity: 0.5;
+}
+
+main {
+    flex: 5;
+}
+
+aside {
+    flex: 3;
+}
