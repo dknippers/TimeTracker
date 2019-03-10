@@ -55,22 +55,11 @@ ul {
     margin: 0;
 }
 
-h1 {
-    text-align: center;
-    margin: 0;
-}
-
-h2 {
-    text-align: center;
-    margin: 0;
-}
-
 .new-task-container {
     text-align: center;
 }
 
 input.new-task {
-    margin-top: 1.5em;
     font-size: 1em;
     width: 100%;
     max-width: 300px;

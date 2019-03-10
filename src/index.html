@@ -15,8 +15,6 @@
     <body>
         <div id="time-tracker" :class="{ loaded: 1 }">
             <main>
-                <h1>Time Tracker</h1>
-
                 <div class="new-task-container">
                     <input
                         class="new-task"
@@ -58,7 +56,7 @@
                     <span v-if="!editName" class="task-name" @click="editName = true">{{task.name}}</span>
                     <input type="text" class="task-name edit" placeholder="Task name"
                         v-if="editName" v-model="task._source.name" @keyup.enter="editName = false" />
-                    <span class="task-duration" v-text="task.duration"></span>
+                    <span class="task-duration" v-text="formatDuration(task.duration, { showZero: false })"></span>
                 </div>
 
                 <div class="controls">
@@ -95,7 +93,7 @@
                                 />
                             </span>
                         </div>
-                        <span class="timeslot-duration">{{timeslot.duration}}</span>
+                        <span class="timeslot-duration" v-text="formatDuration(timeslot.duration, { showZero: false })"></span>
                     </div>
                 </div>
 

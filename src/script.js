@@ -91,8 +91,7 @@
 
             if (includeHours) mappings.push([hours, "h"]);
             if (includeMinutes) mappings.push([minutes, "m"]);
-            if (includeSeconds || totalSeconds < 60)
-                mappings.push([seconds, "s"]);
+            if (includeSeconds) mappings.push([seconds, "s"]);
 
             let hms = "";
             let empty = true;
@@ -229,7 +228,7 @@
         };
     })();
 
-    var fn = {
+    var methods = {
         getComputedTask: function(task) {
             const timeslots = this.timeslotsByTask[task.id] || [];
 
@@ -258,14 +257,14 @@
             return subTasks;
         },
 
-        getComputedTimeslot: function(ts) {
-            return Object.assign({}, ts, {
-                beginTime: utils.formatTimestamp(ts.begin),
-                endTime: utils.formatTimestamp(ts.end),
-                duration: this.getTimeslotDuration(ts),
+        getComputedTimeslot: function(timeslot) {
+            return Object.assign({}, timeslot, {
+                beginTime: utils.formatTimestamp(timeslot.begin),
+                endTime: utils.formatTimestamp(timeslot.end),
+                duration: this.getTimeslotDuration(timeslot),
 
                 // Reference to source object
-                _source: ts
+                _source: timeslot
             });
         },
 
@@ -446,10 +445,12 @@
         createTimeslot: function(taskId) {
             const id = this.nextId++;
 
+            this.now = Date.now();
+
             const timeslot = {
                 id,
                 taskId,
-                begin: Date.now()
+                begin: this.now
             };
 
             Vue.set(this.timeslotsById, id, timeslot);
@@ -487,14 +488,7 @@
             }
         },
 
-        getTimeslotDuration: function(timeslot) {
-            const elapsedSeconds = this.getTimeslotSeconds(timeslot);
-            return utils.secondsToHms(Math.round(elapsedSeconds), {
-                includeSeconds: true
-            });
-        },
-
-        getTimeslotSeconds: function(ts) {
+        getTimeslotDuration: function(ts) {
             if (ts == null || ts.begin == null) {
                 return 0;
             }
@@ -504,10 +498,10 @@
             return (end - ts.begin) / 1000;
         },
 
-        getTaskTotalSeconds: function(task) {
+        getTaskDuration: function(task) {
             const timeslots = this.timeslotsByTask[task.id] || [];
             const taskSeconds = timeslots.reduce(
-                (sum, ts) => sum + this.getTimeslotSeconds(ts),
+                (sum, ts) => sum + this.getTimeslotDuration(ts),
                 0
             );
 
@@ -515,19 +509,12 @@
             let subTasksSeconds = 0;
             if (Array.isArray(subTasks)) {
                 subTasksSeconds = subTasks.reduce(
-                    (sum, subTask) => sum + this.getTaskTotalSeconds(subTask),
+                    (sum, subTask) => sum + this.getTaskDuration(subTask),
                     0
                 );
             }
 
             return taskSeconds + subTasksSeconds;
-        },
-
-        getTaskDuration: function(task) {
-            const elapsedSeconds = this.getTaskTotalSeconds(task);
-            return utils.secondsToHms(Math.round(elapsedSeconds), {
-                includeSeconds: true
-            });
         }
     };
 
@@ -546,6 +533,29 @@
         },
         template: "#task",
         methods: {
+            formatDuration: function(
+                duration,
+                {
+                    showZero = true,
+                    includeSeconds = true,
+                    includeMinutes = true,
+                    includeHours = true
+                } = {}
+            ) {
+                const rounded = Math.round(duration);
+                const format = utils.secondsToHms(rounded, {
+                    includeSeconds,
+                    includeMinutes,
+                    includeHours
+                });
+
+                if (!showZero && /^0[hms]$/.test(format)) {
+                    return null;
+                } else {
+                    return format;
+                }
+            },
+
             doEditBegin: function(timeslotId) {
                 Vue.set(this.editBegin, timeslotId, true);
             },
@@ -636,7 +646,7 @@
     var app = new Vue({
         el: "#time-tracker",
         data: state,
-        methods: fn,
+        methods: methods,
         computed: computed,
 
         beforeCreate: function() {
