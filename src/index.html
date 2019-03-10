@@ -37,10 +37,11 @@
                     @set-parent-id="setParentId($event)"
                     @change-timeslot-begin="changeTimeslotBegin($event)"
                     @change-timeslot-end="changeTimeslotEnd($event)"
+                    @remove-timeslot="removeTimeslot($event)"
                 >
                 </task>
 
-                <div v-if="tasks.length > 0">
+                <div v-if="tasks.length > 0" class="clear-container">
                     <button type="button" @click="clearAll()">Clear all</button>
                 </div>
             </main>
@@ -60,17 +61,17 @@
                 </div>
 
                 <div class="controls">
-                    <button v-if="task.isActive" @click="$emit('stop-task', task.id)">
+                    <button type="button" v-if="task.isActive" @click="$emit('stop-task', task.id)">
                         Stop
                     </button>
-                    <button v-if="!task.isActive" @click="$emit('start-task', task.id)">
+                    <button type="button" v-if="!task.isActive" @click="$emit('start-task', task.id)">
                         Continue
                     </button>
-                    <button @click="$emit('remove-task', task.id)">Remove</button>
-                    <button @click="$emit('reset-task', task.id)">Reset</button>
-                    <button @click="$emit('add-task', { parentId: task.id })">
+                    <button type="button" v-if="task.timeslots.length" @click="$emit('reset-task', task.id)">Reset</button>
+                    <button type="button" @click="$emit('add-task', { parentId: task.id })">
                         Add Sub Task
                     </button>
+                    <button type="button" @click="$emit('remove-task', task.id)">Remove</button>
                 </div>
 
                 <div class="timeslots" v-if="task.timeslots.length">
@@ -94,6 +95,7 @@
                             </span>
                         </div>
                         <span class="timeslot-duration" v-text="formatDuration(timeslot.duration, { showZero: false })"></span>
+                        <span class="timeslot-remove" @click="$emit('remove-timeslot', timeslot.id)">&times;</span>
                     </div>
                 </div>
 
@@ -110,6 +112,7 @@
                         @set-parent-id="$emit('set-parent-id', $event)"
                         @change-timeslot-begin="$emit('change-timeslot-begin', $event)"
                         @change-timeslot-end="$emit('change-timeslot-end', $event)"
+                        @remove-timeslot="$emit('remove-timeslot', $event)"
                     />
                 </div>
             </div>
