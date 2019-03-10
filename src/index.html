@@ -77,19 +77,27 @@
                 <div class="timeslots" v-if="task.timeslots.length">
                     <div v-for="timeslot in task.timeslots" :key="timeslot.id" class="timeslot">
                         <div class="timestamps">
-                            <span @click="doEditBegin(timeslot.id)" v-if="!editBegin[timeslot.id]">{{timeslot.beginTime}}</span>
+                            <span
+                                v-if="!editBegin[timeslot.id]"
+                                v-text="formatTimestamp(timeslot.begin)"
+                                @click="doEditBegin(timeslot.id)">
+                            </span>
                             <span v-if="editBegin[timeslot.id]">
                                 <input class="edit-time" type="text"
-                                    :value="timeslot.beginTime" v-once
+                                    :value="formatTimestamp(timeslot.begin)" v-once
                                     @keyup.enter="changeTimeslotBegin(timeslot.id, $event.target.value)"
                                 />
                             </span>
                             <span> - </span>
-                            <span @click="doEditEnd(timeslot.id)" v-if="!editEnd[timeslot.id] && timeslot.endTime">{{timeslot.endTime}}</span>
-                            <span @click="doEditEnd(timeslot.id)" v-if="!editEnd[timeslot.id] && !timeslot.endTime">...</span>
+                            <span
+                                v-if="!editEnd[timeslot.id] && timeslot.end"
+                                v-text="formatTimestamp(timeslot.end)"
+                                @click="doEditEnd(timeslot.id)"
+                            ></span>
+                            <span @click="doEditEnd(timeslot.id)" v-if="!editEnd[timeslot.id] && !timeslot.end">...</span>
                             <span v-if="editEnd[timeslot.id]">
                                 <input type="text" class="edit-time"
-                                    :value="timeslot.endTime" v-once
+                                    :value="formatTimestamp(timeslot.end)" v-once
                                     @keyup.enter="changeTimeslotEnd(timeslot.id, $event.target.value)"
                                 />
                             </span>

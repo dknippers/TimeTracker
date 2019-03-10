@@ -180,26 +180,6 @@
             return dt.getTime();
         }
 
-        function formatTimestamp(ts) {
-            if (typeof ts !== "number") {
-                if (ts != null) {
-                    // User did pass in something so warn about wrong input here.
-                    console.warn(
-                        `Timestamp should be a number, but got a ${typeof ts}`
-                    );
-                }
-
-                return null;
-            }
-
-            const date = new Date(ts);
-
-            var hours = date.getHours();
-            var minutes = date.getMinutes();
-
-            return zeropad(hours, 2) + ":" + zeropad(minutes, 2);
-        }
-
         function keyedObjectToArray(obj, sortOn) {
             const array = Object.keys(obj).map(key => obj[key]);
             if (typeof sortOn === "function") {
@@ -221,9 +201,10 @@
             secondsToHms,
             saveToStorage,
             getFromStorage,
-            formatTimestamp,
             timeToTimestamp,
             sort,
+            zeropad,
+            pad,
             keyedObjectToArray
         };
     })();
@@ -259,8 +240,6 @@
 
         getComputedTimeslot: function(timeslot) {
             return Object.assign({}, timeslot, {
-                beginTime: utils.formatTimestamp(timeslot.begin),
-                endTime: utils.formatTimestamp(timeslot.end),
                 duration: this.getTimeslotDuration(timeslot),
 
                 // Reference to source object
@@ -554,6 +533,28 @@
                 } else {
                     return format;
                 }
+            },
+
+            formatTimestamp: function(timestamp) {
+                if (typeof timestamp !== "number") {
+                    if (timestamp != null) {
+                        // User did pass in something so warn about wrong input here.
+                        console.warn(
+                            `Timestamp should be a number, but got a ${typeof timestamp}`
+                        );
+                    }
+
+                    return null;
+                }
+
+                const date = new Date(timestamp);
+
+                var hours = date.getHours();
+                var minutes = date.getMinutes();
+
+                return (
+                    utils.zeropad(hours, 2) + ":" + utils.zeropad(minutes, 2)
+                );
             },
 
             doEditBegin: function(timeslotId) {
