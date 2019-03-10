@@ -20,8 +20,7 @@
                         class="new-task"
                         type="text"
                         placeholder="New task"
-                        @keyup.enter="inputTask()"
-                        v-model="nextTaskName"
+                        @keyup.enter="inputTask($event.target)"
                     />
                 </div>
 

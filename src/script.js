@@ -3,7 +3,6 @@
 
     var state = {
         nextId: initialId,
-        nextTaskName: null,
         tasksById: {},
         timeslotsById: {},
 
@@ -260,9 +259,9 @@
             utils.saveToStorage("time-tracker", toSave);
         },
 
-        inputTask: function() {
-            this.addTask({ name: this.nextTaskName });
-            this.nextTaskName = null;
+        inputTask: function(inputElement) {
+            this.addTask({ name: inputElement.value });
+            inputElement.value = "";
         },
 
         addTask: function(opts) {
