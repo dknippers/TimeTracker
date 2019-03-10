@@ -50,13 +50,18 @@
             <div
                 class="task"
                 draggable="true"
-                :class="{ active: task.isActive, dropzone: dropzone, dragging: dragging, subtask: task.parentId != null }"
+                :class="{ active: task.isActive, dropzone: dropzone, dragging: dragging, subtask: task.parentId != null, collapsed: collapsed }"
             >
                 <div class="task-head">
                     <div class="task-info" :class="{ editing: editName }">
-                        <span v-if="!editName" class="task-name" @click="editName = true">{{task.name}}</span>
-                        <input type="text" class="task-name edit" placeholder="Task name" v-focus required
-                            v-if="editName" v-model="task._source.name" @keyup.enter="completeEdit()" />
+                        <span class="task-collapse" @click="collapsed = !collapsed">
+                            <span v-if="collapsed" class="expand">▼</span>
+                            <span v-if="!collapsed" class="collapse">▲</span>
+                        </span>
+
+                        <span v-if="!editName" class="task-name" @click="toggleEdit()" v-text="task.name"></span>
+                        <input type="text" class="task-name edit" placeholder="Task name"
+                            v-focus v-if="editName" v-model="task._source.name" @keyup.enter="toggleEdit()" />
                         <span class="task-duration" v-text="formatDuration(task.duration, { showZero: false })"></span>
                     </div>
                 </div>
@@ -77,35 +82,46 @@
                     </div>
 
                     <div class="timeslots" v-if="task.timeslots.length">
-                        <div v-for="timeslot in task.timeslots" :key="timeslot.id" class="timeslot">
-                            <div class="timestamps">
-                                <span
-                                    v-if="!editBegin[timeslot.id]"
-                                    v-text="formatTimestamp(timeslot.begin)"
-                                    @click="doEditBegin(timeslot.id)">
+                        <div v-for="timeslot in task.timeslots" :key="timeslot.id"
+                            class="timeslot" :class="{ active: timeslot.isActive }">
+                            <span class="spacer"></span>
+
+                            <span class="timeslot-period">
+                                <span class="timeslot-begin">
+                                    <span
+                                        v-if="!editBegin[timeslot.id]"
+                                        v-text="formatTimestamp(timeslot.begin)"
+                                        @click="doEditBegin(timeslot.id)">
+                                    </span>
+                                    <span v-if="editBegin[timeslot.id]">
+                                        <input class="edit-time" type="text"
+                                            :value="formatTimestamp(timeslot.begin)" v-once v-focus
+                                            @keyup.enter="changeTimeslotBegin(timeslot.id, $event.target.value)"
+                                        />
+                                    </span>
                                 </span>
-                                <span v-if="editBegin[timeslot.id]">
-                                    <input class="edit-time" type="text"
-                                        :value="formatTimestamp(timeslot.begin)" v-once
-                                        @keyup.enter="changeTimeslotBegin(timeslot.id, $event.target.value)"
-                                    />
+
+                                <span class="timeslot-separator">-</span>
+
+                                <span class="timeslot-end">
+                                    <span
+                                        v-if="!editEnd[timeslot.id]"
+                                        v-text="formatTimestamp(timeslot.end)"
+                                        @click="doEditEnd(timeslot.id)"
+                                    ></span>
+                                    <span v-if="editEnd[timeslot.id]">
+                                        <input type="text" class="edit-time"
+                                            :value="formatTimestamp(timeslot.end)" v-once v-focus
+                                            @keyup.enter="changeTimeslotEnd(timeslot.id, $event.target.value)"
+                                        />
+                                    </span>
                                 </span>
-                                <span> - </span>
-                                <span
-                                    v-if="!editEnd[timeslot.id] && timeslot.end"
-                                    v-text="formatTimestamp(timeslot.end)"
-                                    @click="doEditEnd(timeslot.id)"
-                                ></span>
-                                <span @click="doEditEnd(timeslot.id)" v-if="!editEnd[timeslot.id] && !timeslot.end">...</span>
-                                <span v-if="editEnd[timeslot.id]">
-                                    <input type="text" class="edit-time"
-                                        :value="formatTimestamp(timeslot.end)" v-once
-                                        @keyup.enter="changeTimeslotEnd(timeslot.id, $event.target.value)"
-                                    />
-                                </span>
-                            </div>
-                            <span class="timeslot-duration" v-text="formatDuration(timeslot.duration, { showZero: false })"></span>
-                            <span class="timeslot-remove" @click="$emit('remove-timeslot', timeslot.id)">&times;</span>
+                            </span>
+
+                            <span class="timeslot-right">
+                                <span class="timeslot-remove" @click="$emit('remove-timeslot', timeslot.id)">remove</span>
+                                <span class="timeslot-duration" v-text="formatDuration(timeslot.duration, { showZero: false })"></span>
+                            </span>
                         </div>
                     </div>
 

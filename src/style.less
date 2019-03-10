@@ -99,22 +99,43 @@ input.new-task {
             justify-content: center;
             align-items: center;
 
+            .task-collapse {
+                flex: 1;
+                > span {
+                    visibility: hidden;
+                }
+
+                &:hover {
+                    > span {
+                        visibility: visible;
+                    }
+
+                    cursor: pointer;
+                }
+            }
+
             .task-name {
                 padding: 0.5em 0;
-                flex: 1;
+                flex: 6;
                 text-align: center;
+
+                &:hover {
+                    cursor: text;
+                }
 
                 &.edit {
                     max-width: 60%;
-                    font-size: 0.9em;
+                    font-size: 1em;
+                    border: none;
+                    outline: none;
                 }
             }
 
             .task-duration {
-                position: absolute;
-                right: 0;
+                flex: 1;
                 font-size: 0.9em;
                 font-weight: bold;
+                text-align: right;
             }
         }
     }
@@ -151,14 +172,34 @@ input.new-task {
         }
 
         .timeslots {
-            text-align: center;
-            margin-top: 0.5em;
-
             .timeslot {
-                position: relative;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding-top: 0.5em;
 
-                .timestamps {
-                    display: inline-block;
+                .spacer {
+                    flex: 1;
+                }
+
+                .timeslot-period {
+                    flex: 4;
+                    text-align: center;
+                    display: flex;
+
+                    .timeslot-begin {
+                        flex: 4;
+                        text-align: right;
+                    }
+
+                    .timeslot-separator {
+                        flex: 1;
+                    }
+
+                    .timeslot-end {
+                        flex: 4;
+                        text-align: left;
+                    }
 
                     .edit-time {
                         width: 4em;
@@ -167,25 +208,43 @@ input.new-task {
                     }
                 }
 
-                .timeslot-duration {
-                    right: 0;
-                    position: absolute;
-                    font-size: 0.9em;
+                &.active .timeslot-end {
+                    font-weight: bold;
+                    color: green;
                 }
 
-                .timeslot-remove {
-                    font-weight: bold;
-                    color: #2e3436;
-                    margin-left: 0.5em;
-                    padding: 0 0.5em;
-                    position: absolute;
+                .timeslot-right {
+                    flex: 1;
+                    text-align: right;
+
+                    .timeslot-duration {
+                        font-size: 0.9em;
+                        text-align: right;
+                    }
+
+                    .timeslot-remove {
+                        font-weight: bold;
+                        color: #cc0000;
+                        display: none;
+                    }
 
                     &:hover {
-                        color: #cc0000;
                         cursor: pointer;
+                        .timeslot-remove {
+                            display: inline;
+                        }
+                        .timeslot-duration {
+                            display: none;
+                        }
                     }
                 }
             }
+        }
+    }
+
+    &.collapsed {
+        > .task-body {
+            display: none;
         }
     }
 }

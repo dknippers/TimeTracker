@@ -239,6 +239,8 @@
 
         getComputedTimeslot: function(timeslot) {
             return Object.assign({}, timeslot, {
+                isActive: timeslot.begin != null && timeslot.end == null,
+                end: timeslot.end || this.now,
                 duration: this.getTimeslotDuration(timeslot),
 
                 // Reference to source object
@@ -525,6 +527,7 @@
                 dropzone: false,
                 dragging: false,
                 editName: false,
+                collapsed: false,
 
                 // Timeslot id -> true/false
                 editBegin: {},
@@ -651,9 +654,9 @@
                 }
             },
 
-            completeEdit: function() {
+            toggleEdit: function() {
                 if (this.task.name) {
-                    this.editName = false;
+                    this.editName = !this.editName;
                 }
             }
         }
