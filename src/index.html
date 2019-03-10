@@ -50,77 +50,81 @@
             <div
                 class="task"
                 draggable="true"
-                :class="{ active: task.isActive, dropzone: dropzone, dragging: dragging }"
+                :class="{ active: task.isActive, dropzone: dropzone, dragging: dragging, subtask: task.parentId != null }"
             >
-                <div class="task-info">
-                    <span v-if="!editName" class="task-name" @click="editName = true">{{task.name}}</span>
-                    <input type="text" class="task-name edit" placeholder="Task name" v-focus required
-                        v-if="editName" v-model="task._source.name" @keyup.enter="completeEdit()" />
-                    <span class="task-duration" v-text="formatDuration(task.duration, { showZero: false })"></span>
-                </div>
-
-                <div class="controls">
-                    <button type="button" v-if="task.isActive" @click="$emit('stop-task', task.id)">
-                        Stop
-                    </button>
-                    <button type="button" v-if="!task.isActive" @click="$emit('start-task', task.id)">
-                        Continue
-                    </button>
-                    <button type="button" v-if="task.timeslots.length" @click="$emit('reset-task', task.id)">Reset</button>
-                    <button type="button" @click="$emit('add-task', { parentId: task.id })">
-                        Add Sub Task
-                    </button>
-                    <button type="button" @click="$emit('remove-task', task.id)">Remove</button>
-                </div>
-
-                <div class="timeslots" v-if="task.timeslots.length">
-                    <div v-for="timeslot in task.timeslots" :key="timeslot.id" class="timeslot">
-                        <div class="timestamps">
-                            <span
-                                v-if="!editBegin[timeslot.id]"
-                                v-text="formatTimestamp(timeslot.begin)"
-                                @click="doEditBegin(timeslot.id)">
-                            </span>
-                            <span v-if="editBegin[timeslot.id]">
-                                <input class="edit-time" type="text"
-                                    :value="formatTimestamp(timeslot.begin)" v-once
-                                    @keyup.enter="changeTimeslotBegin(timeslot.id, $event.target.value)"
-                                />
-                            </span>
-                            <span> - </span>
-                            <span
-                                v-if="!editEnd[timeslot.id] && timeslot.end"
-                                v-text="formatTimestamp(timeslot.end)"
-                                @click="doEditEnd(timeslot.id)"
-                            ></span>
-                            <span @click="doEditEnd(timeslot.id)" v-if="!editEnd[timeslot.id] && !timeslot.end">...</span>
-                            <span v-if="editEnd[timeslot.id]">
-                                <input type="text" class="edit-time"
-                                    :value="formatTimestamp(timeslot.end)" v-once
-                                    @keyup.enter="changeTimeslotEnd(timeslot.id, $event.target.value)"
-                                />
-                            </span>
-                        </div>
-                        <span class="timeslot-duration" v-text="formatDuration(timeslot.duration, { showZero: false })"></span>
-                        <span class="timeslot-remove" @click="$emit('remove-timeslot', timeslot.id)">&times;</span>
+                <div class="task-head">
+                    <div class="task-info" :class="{ editing: editName }">
+                        <span v-if="!editName" class="task-name" @click="editName = true">{{task.name}}</span>
+                        <input type="text" class="task-name edit" placeholder="Task name" v-focus required
+                            v-if="editName" v-model="task._source.name" @keyup.enter="completeEdit()" />
+                        <span class="task-duration" v-text="formatDuration(task.duration, { showZero: false })"></span>
                     </div>
                 </div>
 
-                <div class="subtasks" v-if="task.subTasks.length">
-                    <task
-                        v-for="subTask in task.subTasks"
-                        :key="subTask.id"
-                        v-bind="{ task:subTask }"
-                        @add-task="$emit('add-task', $event)"
-                        @remove-task="$emit('remove-task', $event)"
-                        @reset-task="$emit('reset-task', $event)"
-                        @start-task="$emit('start-task', $event)"
-                        @stop-task="$emit('stop-task', $event)"
-                        @set-parent-id="$emit('set-parent-id', $event)"
-                        @change-timeslot-begin="$emit('change-timeslot-begin', $event)"
-                        @change-timeslot-end="$emit('change-timeslot-end', $event)"
-                        @remove-timeslot="$emit('remove-timeslot', $event)"
-                    />
+                <div class="task-body">
+                    <div class="controls">
+                        <button type="button" v-if="task.isActive" @click="$emit('stop-task', task.id)">
+                            Stop
+                        </button>
+                        <button type="button" v-if="!task.isActive" @click="$emit('start-task', task.id)">
+                            Continue
+                        </button>
+                        <button type="button" v-if="task.timeslots.length" @click="$emit('reset-task', task.id)">Reset</button>
+                        <button type="button" @click="$emit('add-task', { parentId: task.id })">
+                            Add Sub Task
+                        </button>
+                        <button type="button" @click="$emit('remove-task', task.id)">Remove</button>
+                    </div>
+
+                    <div class="timeslots" v-if="task.timeslots.length">
+                        <div v-for="timeslot in task.timeslots" :key="timeslot.id" class="timeslot">
+                            <div class="timestamps">
+                                <span
+                                    v-if="!editBegin[timeslot.id]"
+                                    v-text="formatTimestamp(timeslot.begin)"
+                                    @click="doEditBegin(timeslot.id)">
+                                </span>
+                                <span v-if="editBegin[timeslot.id]">
+                                    <input class="edit-time" type="text"
+                                        :value="formatTimestamp(timeslot.begin)" v-once
+                                        @keyup.enter="changeTimeslotBegin(timeslot.id, $event.target.value)"
+                                    />
+                                </span>
+                                <span> - </span>
+                                <span
+                                    v-if="!editEnd[timeslot.id] && timeslot.end"
+                                    v-text="formatTimestamp(timeslot.end)"
+                                    @click="doEditEnd(timeslot.id)"
+                                ></span>
+                                <span @click="doEditEnd(timeslot.id)" v-if="!editEnd[timeslot.id] && !timeslot.end">...</span>
+                                <span v-if="editEnd[timeslot.id]">
+                                    <input type="text" class="edit-time"
+                                        :value="formatTimestamp(timeslot.end)" v-once
+                                        @keyup.enter="changeTimeslotEnd(timeslot.id, $event.target.value)"
+                                    />
+                                </span>
+                            </div>
+                            <span class="timeslot-duration" v-text="formatDuration(timeslot.duration, { showZero: false })"></span>
+                            <span class="timeslot-remove" @click="$emit('remove-timeslot', timeslot.id)">&times;</span>
+                        </div>
+                    </div>
+
+                    <div class="subtasks" v-if="task.subTasks.length">
+                        <task
+                            v-for="subTask in task.subTasks"
+                            :key="subTask.id"
+                            v-bind="{ task:subTask }"
+                            @add-task="$emit('add-task', $event)"
+                            @remove-task="$emit('remove-task', $event)"
+                            @reset-task="$emit('reset-task', $event)"
+                            @start-task="$emit('start-task', $event)"
+                            @stop-task="$emit('stop-task', $event)"
+                            @set-parent-id="$emit('set-parent-id', $event)"
+                            @change-timeslot-begin="$emit('change-timeslot-begin', $event)"
+                            @change-timeslot-end="$emit('change-timeslot-end', $event)"
+                            @remove-timeslot="$emit('remove-timeslot', $event)"
+                        />
+                    </div>
                 </div>
             </div>
         </script>

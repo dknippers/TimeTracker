@@ -1,0 +1,199 @@
+* {
+    box-sizing: border-box;
+    font-family: Calibri, sans-serif;
+}
+
+html {
+    font-size: 100%;
+}
+
+@media screen and (max-width: 600px) {
+    #time-tracker {
+        font-size: ~"calc(12px + 4 * ((100vw - 200px) / 600))";
+    }
+}
+
+body {
+    padding: 0;
+    margin: 0;
+    background-color: #2e3436;
+}
+
+button {
+    font-size: 0.8em;
+    padding: 0.4em 0.8em;
+    background: none;
+    border: 1px solid lightgray;
+    box-shadow: 1px 1px 1px 0 lightgrey;
+    outline: none;
+
+    &:hover {
+        cursor: pointer;
+        background-color: #2e3436;
+        color: white;
+    }
+}
+
+#time-tracker {
+    padding: 2em;
+    margin: 2em auto 0 auto;
+    display: none;
+    max-width: 600px;
+    color: #2e3436;
+    background-color: white;
+    border-radius: 5px;
+
+    &.loaded {
+        display: flex;
+        justify-content: center;
+    }
+}
+
+ul {
+    list-style-type: none;
+    padding: 0 0 0 1em;
+    margin: 0;
+}
+
+.new-task-container {
+    text-align: center;
+}
+
+input.new-task {
+    font-size: 1em;
+    width: 100%;
+    max-width: 300px;
+    padding: 0.8em 1.2em;
+    box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+    border: 0;
+}
+
+.clear-container {
+    margin-top: 2em;
+}
+
+.task {
+    margin: 2em 0 0 0;
+    box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+
+    &.subtask {
+        margin-top: 1em;
+    }
+
+    &.dropzone {
+        box-shadow: 0 0 2px 2px #204a87;
+    }
+
+    &.dragging {
+        opacity: 0.5;
+    }
+
+    > .task-head {
+        padding: 0.25em 1.5em;
+        background-color: #2e3436;
+        color: white;
+
+        .task-info {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            .task-name {
+                padding: 0.5em 0;
+                flex: 1;
+                text-align: center;
+
+                &.edit {
+                    max-width: 60%;
+                    font-size: 0.9em;
+                }
+            }
+
+            .task-duration {
+                position: absolute;
+                right: 0;
+                font-size: 0.9em;
+                font-weight: bold;
+            }
+        }
+    }
+
+    &.subtask .task-head {
+        background-color: #ededed;
+        color: #2e3436;
+        border-bottom: 1px solid darkgray;
+
+        > .task-info .task-name {
+            padding-top: 0.25em;
+            padding-bottom: 0.25em;
+        }
+    }
+
+    &.active {
+        > .task-head {
+            background-color: #333399;
+            color: white;
+            //box-shadow: 0 0 4px 0 green, 0 0 2px 0 green;
+        }
+    }
+
+    > .task-body {
+        padding: 1.5em;
+        padding-top: 0;
+
+        .controls {
+            display: flex;
+
+            > button {
+                flex: 1;
+            }
+        }
+
+        .timeslots {
+            text-align: center;
+            margin-top: 0.5em;
+
+            .timeslot {
+                position: relative;
+
+                .timestamps {
+                    display: inline-block;
+
+                    .edit-time {
+                        width: 4em;
+                        padding: 0 0.25em;
+                        text-align: center;
+                    }
+                }
+
+                .timeslot-duration {
+                    right: 0;
+                    position: absolute;
+                    font-size: 0.9em;
+                }
+
+                .timeslot-remove {
+                    font-weight: bold;
+                    color: #2e3436;
+                    margin-left: 0.5em;
+                    padding: 0 0.5em;
+                    position: absolute;
+
+                    &:hover {
+                        color: #cc0000;
+                        cursor: pointer;
+                    }
+                }
+            }
+        }
+    }
+}
+
+main {
+    flex: 5;
+}
+
+aside {
+    flex: 3;
+}
