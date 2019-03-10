@@ -156,8 +156,40 @@
             return str;
         }
 
+        /**
+         * Converts the given time string to a timestamp. Only supports HH:mm and interprets it as a time of the current day in the local timezone.
+         * @param {string} time Time string to convert to a timestamp.
+         */
+        function timeToTimestamp(time) {
+            const timeRe = /^[012]?[0-9]:[0-5][0-9]$/;
+            if (!timeRe.test(time)) {
+                console.warn(
+                    `Invalid time string, should match RegExp ${timeRe}`
+                );
+                return null;
+            }
+
+            var hrMin = time.split(":").map(v => parseInt(v));
+            const hr = hrMin[0];
+            const min = hrMin[1];
+
+            const dt = new Date();
+            dt.setHours(hr);
+            dt.setMinutes(min);
+            dt.setSeconds(0, 0);
+
+            return dt.getTime();
+        }
+
         function formatTimestamp(ts) {
             if (typeof ts !== "number") {
+                if (ts != null) {
+                    // User did pass in something so warn about wrong input here.
+                    console.warn(
+                        `Timestamp should be a number, but got a ${typeof ts}`
+                    );
+                }
+
                 return null;
             }
 
@@ -187,11 +219,12 @@
         }
 
         return {
-            secondsToHms: secondsToHms,
-            saveToStorage: saveToStorage,
-            getFromStorage: getFromStorage,
-            formatTimestamp: formatTimestamp,
-            sort: sort,
+            secondsToHms,
+            saveToStorage,
+            getFromStorage,
+            formatTimestamp,
+            timeToTimestamp,
+            sort,
             keyedObjectToArray
         };
     })();
@@ -200,15 +233,13 @@
         getComputedTask: function(task) {
             const timeslots = this.timeslotsByTask[task.id] || [];
 
-            const isActive =
-                timeslots.length > 0 &&
-                timeslots[timeslots.length - 1].end == null;
-
             return Object.assign({}, task, {
                 duration: this.getTaskDuration(task),
                 timeslots: timeslots.map(this.getComputedTimeslot),
                 subTasks: this.getSubTasks(task).map(this.getComputedTask),
-                isActive,
+                isActive: timeslots.some(
+                    timeslot => timeslot.begin != null && timeslot.end == null
+                ),
 
                 // Reference to source object
                 _source: task
@@ -231,7 +262,10 @@
             return Object.assign({}, ts, {
                 beginTime: utils.formatTimestamp(ts.begin),
                 endTime: utils.formatTimestamp(ts.end),
-                duration: this.getTimeslotDuration(ts)
+                duration: this.getTimeslotDuration(ts),
+
+                // Reference to source object
+                _source: ts
             });
         },
 
@@ -276,13 +310,6 @@
             };
         },
 
-        renameTask: function(id, newName) {
-            this.updateTask(id, task => {
-                task.name = newName;
-                return task;
-            });
-        },
-
         setParentId: function(opts) {
             var taskId = opts.taskId;
             var parentId = opts.parentId;
@@ -311,6 +338,24 @@
             }
         },
 
+        changeTimeslotBegin: function(args) {
+            this.changeTimeslotTimestamp(args, "begin");
+        },
+
+        changeTimeslotEnd: function(args) {
+            this.changeTimeslotTimestamp(args, "end");
+        },
+
+        changeTimeslotTimestamp: function(args, property) {
+            const timeslotId = args.timeslotId;
+            const timestamp = args.timestamp;
+
+            this.updateTimeslot(timeslotId, timeslot => {
+                Vue.set(timeslot, property, timestamp);
+                return timeslot;
+            });
+        },
+
         onDrop: function(ev) {
             const taskId = ev.dataTransfer.getData("taskId");
 
@@ -329,6 +374,20 @@
 
             const newTask = updateFn(currentTask);
             Vue.set(this.tasksById, newTask.id, newTask);
+            if (typeof doneFn === "function") {
+                doneFn();
+            }
+        },
+
+        updateTimeslot: function(id, updateFn, doneFn) {
+            const currentTimeslot = this.timeslotsById[id];
+            if (currentTimeslot == null) {
+                console.warn(`No timeslot found with id ${id}`);
+                return;
+            }
+
+            const newTimeslot = updateFn(currentTimeslot);
+            Vue.set(this.timeslotsById, newTimeslot.id, newTimeslot);
             if (typeof doneFn === "function") {
                 doneFn();
             }
@@ -478,11 +537,35 @@
             return {
                 dropzone: false,
                 dragging: false,
-                editName: false
+                editName: false,
+
+                // Timeslot id -> true/false
+                editBegin: {},
+                editEnd: {}
             };
         },
         template: "#task",
         methods: {
+            doEditBegin: function(timeslotId) {
+                Vue.set(this.editBegin, timeslotId, true);
+            },
+
+            doEditEnd: function(timeslotId) {
+                Vue.set(this.editEnd, timeslotId, true);
+            },
+
+            changeTimeslotBegin: function(timeslotId, time) {
+                const timestamp = utils.timeToTimestamp(time);
+                this.$emit("change-timeslot-begin", { timeslotId, timestamp });
+                Vue.delete(this.editBegin, timeslotId);
+            },
+
+            changeTimeslotEnd: function(timeslotId, time) {
+                const timestamp = utils.timeToTimestamp(time);
+                this.$emit("change-timeslot-end", { timeslotId, timestamp });
+                Vue.delete(this.editEnd, timeslotId);
+            },
+
             onDragStart: function(ev) {
                 ev.stopPropagation();
 

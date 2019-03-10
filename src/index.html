@@ -124,6 +124,14 @@
                 margin: 0.25em 0 0 0;
             }
 
+            .task .timeslots .timeslot .timestamps {
+                display: inline-block;
+            }
+
+            .task .timeslots .timeslot .timestamps .edit-time {
+                width: 5em;
+            }
+
             .task .timeslots .timeslot .timeslot-duration {
                 right: 0;
                 position: absolute;
@@ -176,6 +184,8 @@
                     @start-task="startTask($event)"
                     @stop-task="stopTask($event)"
                     @set-parent-id="setParentId($event)"
+                    @change-timeslot-begin="changeTimeslotBegin($event)"
+                    @change-timeslot-end="changeTimeslotEnd($event)"
                 >
                 </task>
 
@@ -213,10 +223,25 @@
                 </div>
 
                 <div class="timeslots" v-if="task.timeslots.length">
-                    <div v-for="timeslot in task.timeslots" :key="timeslot.begin" class="timeslot">
-                        <span>{{timeslot.beginTime}} - </span>
-                        <span v-if="timeslot.endTime">{{timeslot.endTime}}</span>
-                        <span v-else>...</span>
+                    <div v-for="timeslot in task.timeslots" :key="timeslot.id" class="timeslot">
+                        <div class="timestamps">
+                            <span @click="doEditBegin(timeslot.id)" v-if="!editBegin[timeslot.id]">{{timeslot.beginTime}}</span>
+                            <span v-if="editBegin[timeslot.id]">
+                                <input class="edit-time" type="text"
+                                    :value="timeslot.beginTime" v-once
+                                    @keyup.enter="changeTimeslotBegin(timeslot.id, $event.target.value)"
+                                />
+                            </span>
+                            <span> - </span>
+                            <span @click="doEditEnd(timeslot.id)" v-if="!editEnd[timeslot.id] && timeslot.endTime">{{timeslot.endTime}}</span>
+                            <span @click="doEditEnd(timeslot.id)" v-if="!editEnd[timeslot.id] && !timeslot.endTime">...</span>
+                            <span v-if="editEnd[timeslot.id]">
+                                <input type="text" class="edit-time"
+                                    :value="timeslot.endTime" v-once
+                                    @keyup.enter="changeTimeslotEnd(timeslot.id, $event.target.value)"
+                                />
+                            </span>
+                        </div>
                         <span class="timeslot-duration">{{timeslot.duration}}</span>
                     </div>
                 </div>
@@ -232,6 +257,8 @@
                         @start-task="$emit('start-task', $event)"
                         @stop-task="$emit('stop-task', $event)"
                         @set-parent-id="$emit('set-parent-id', $event)"
+                        @change-timeslot-begin="$emit('change-timeslot-begin', $event)"
+                        @change-timeslot-end="$emit('change-timeslot-end', $event)"
                     />
                 </div>
             </div>
