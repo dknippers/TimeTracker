@@ -68,14 +68,15 @@
          * Converts the given amount of seconds to the XhYmZs format.
          * For example, input 3750 would yield 1h2m30s
          * @param {number} totalSeconds The seconds to convert to XhYmZs format
-         * @param {{includeHours: boolean, includeMinutes: boolean, includeSeconds: boolean}} parts Specify which parts to include in the output
+         * @param {{showHours: boolean, showMinutes: boolean, showSeconds: boolean}} parts Specify which parts to show in the output
          */
         function secondsToHms(
             totalSeconds,
             {
-                includeHours = true,
-                includeMinutes = true,
-                includeSeconds = true
+                showHours = true,
+                showMinutes = true,
+                showSeconds = true,
+                round = false
             } = {}
         ) {
             let seconds = totalSeconds;
@@ -88,9 +89,9 @@
 
             const mappings = [];
 
-            if (includeHours) mappings.push([hours, "h"]);
-            if (includeMinutes) mappings.push([minutes, "m"]);
-            if (includeSeconds) mappings.push([seconds, "s"]);
+            if (showHours) mappings.push([hours, "h"]);
+            if (showMinutes) mappings.push([minutes, "m"]);
+            if (showSeconds || totalSeconds < 60) mappings.push([seconds, "s"]);
 
             let hms = "";
             let empty = true;
@@ -548,16 +549,16 @@
                 duration,
                 {
                     showZero = true,
-                    includeSeconds = true,
-                    includeMinutes = true,
-                    includeHours = true
+                    showSeconds = true,
+                    showMinutes = true,
+                    showHours = true
                 } = {}
             ) {
                 const rounded = Math.round(duration);
                 const format = utils.secondsToHms(rounded, {
-                    includeSeconds,
-                    includeMinutes,
-                    includeHours
+                    showSeconds,
+                    showMinutes,
+                    showHours
                 });
 
                 if (!showZero && /^0[hms]$/.test(format)) {
