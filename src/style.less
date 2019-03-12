@@ -11,30 +11,10 @@ html {
     font-size: 100%;
 }
 
-@media screen and (max-width: 600px) {
-    #time-tracker {
-        font-size: ~"calc(12px + 4 * ((100vw - 200px) / 600))";
-    }
-}
-
 body {
     padding: 0;
     margin: 0;
     background-color: @dark;
-}
-
-button {
-    font-size: 0.9em;
-    padding: 0.4em 0.8em;
-    background: 0 0;
-    border: 1px solid lightgray;
-    box-shadow: 1px 1px 1px 0 lightgrey;
-    outline: 0;
-
-    &:hover {
-        cursor: pointer;
-        box-shadow: 0px 0px 2px 0 @purple;
-    }
 }
 
 #time-tracker {
@@ -50,287 +30,326 @@ button {
         display: flex;
         justify-content: center;
     }
-}
 
-ul {
-    list-style-type: none;
-    padding: 0 0 0 1em;
-    margin: 0;
-}
+    ul {
+        list-style-type: none;
+        padding: 0 0 0 1em;
+        margin: 0;
+    }
 
-.new-task-container {
-    text-align: center;
-}
+    button {
+        font-size: 0.9em;
+        padding: 0.4em 0.8em;
+        background: 0 0;
+        border: 1px solid lightgray;
+        box-shadow: 1px 1px 1px 0 lightgrey;
+        outline: 0;
 
-input.new-task {
-    font-size: 1em;
-    width: 100%;
-    max-width: 300px;
-    padding: 0.8em 1.2em;
-    box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
-    border: 0;
-}
-
-.remove-all-container {
-    margin-top: 1em;
-    text-align: center;
-
-    .remove-all {
-        .text {
-            margin-left: 0.5em;
-            display: none;
-        }
         &:hover {
-            .text {
-                display: inline;
-            }
+            cursor: pointer;
+            box-shadow: 0px 0px 2px 0 @purple;
         }
     }
-}
 
-.task {
-    margin: 2em 0 0 0;
-    box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
-
-    &.subtask {
-        margin-top: 0.5em;
-        margin-bottom: 0.5em;
-    }
-
-    ~ .task {
-        margin-top: 1em;
-    }
-
-    &.dropzone {
-        box-shadow: 0 0 2px 2px @purple;
-    }
-
-    &.dragging {
-        opacity: 0.5;
-    }
-
-    > .task-head {
-        padding: 0;
-        background-color: @dark;
-        color: white;
-
-        display: flex;
+    .top-container {
+        position: relative;
         justify-content: center;
+        display: flex;
         align-items: center;
 
-        > .left,
-        > .right {
+        .spacer {
+            flex: 1;
+        }
+
+        input.new-task {
+            font-size: 1em;
+            padding: 0.8em 1.2em;
+            box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+            border: 0;
             flex: 2;
         }
 
-        > .left {
-            display: flex;
+        .total-duration {
+            color: #aaa;
+            text-align: right;
+            font-size: 1em;
+            flex: 1;
+            margin-left: 0.5em;
+            visibility: hidden;
 
-            > button {
-                flex: 1;
-                visibility: hidden;
-                padding: 0.5rem;
-                border: none;
-                box-shadow: none;
-                color: @light;
+            &.visible {
+                visibility: visible;
+            }
 
-                &.add-subtask {
-                    font-size: 1em;
+            > .clock {
+                margin-left: 0.1em;
+            }
+        }
+    }
+
+    .remove-all-container {
+        margin-top: 1em;
+        text-align: center;
+
+        .remove-all {
+            .text {
+                margin-left: 0.5em;
+                display: none;
+            }
+            &:hover {
+                .text {
+                    display: inline;
                 }
+            }
+        }
+    }
+
+    .task {
+        margin: 2em 0 0 0;
+        box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+
+        ~ .task {
+            margin-top: 1em;
+        }
+
+        &.subtask {
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+
+        &.dropzone {
+            box-shadow: 0 0 2px 2px @purple;
+        }
+
+        &.dragging {
+            opacity: 0.5;
+        }
+
+        > .task-head {
+            padding: 0;
+            background-color: @dark;
+            color: white;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            > .left,
+            > .right {
+                flex: 2;
+            }
+
+            > .left {
+                display: flex;
+
+                > button {
+                    flex: 1;
+                    visibility: hidden;
+                    padding: 0.5rem;
+                    border: none;
+                    box-shadow: none;
+                    color: @light;
+
+                    &.add-subtask {
+                        font-size: 1em;
+                    }
+
+                    &:hover {
+                        background-color: white;
+                        color: @purple;
+                    }
+                }
+
+                > span {
+                    visibility: hidden;
+                }
+
+                &:hover {
+                    > span {
+                        visibility: visible;
+                    }
+
+                    cursor: pointer;
+                }
+            }
+
+            &:hover > .left > button {
+                visibility: visible;
+            }
+
+            > .center {
+                flex: 4;
+
+                .task-name {
+                    padding: 0.5em 0;
+                    flex: 6;
+                    text-align: center;
+
+                    &:hover {
+                        cursor: text;
+                    }
+
+                    &.edit {
+                        width: 100%;
+                        font-size: 1em;
+                        border: none;
+                        outline: none;
+                    }
+                }
+            }
+
+            > .right {
+                .task-duration {
+                    flex: 1;
+                    font-size: 0.9em;
+                    font-weight: bold;
+                    text-align: right;
+                    padding-right: 1em;
+                }
+            }
+        }
+
+        &.subtask > .task-head {
+            background-color: #ededed;
+            color: @dark;
+
+            > .left > button {
+                color: @dark;
 
                 &:hover {
                     background-color: white;
                     color: @purple;
                 }
             }
-
-            > span {
-                visibility: hidden;
-            }
-
-            &:hover {
-                > span {
-                    visibility: visible;
-                }
-
-                cursor: pointer;
-            }
         }
 
-        &:hover > .left > button {
-            visibility: visible;
-        }
-
-        > .center {
-            flex: 4;
-
-            .task-name {
-                padding: 0.5em 0;
-                flex: 6;
-                text-align: center;
-
-                &:hover {
-                    cursor: text;
-                }
-
-                &.edit {
-                    width: 100%;
-                    font-size: 1em;
-                    border: none;
-                    outline: none;
-                }
-            }
-        }
-
-        > .right {
-            .task-duration {
-                flex: 1;
-                font-size: 0.9em;
-                font-weight: bold;
-                text-align: right;
-                padding-right: 1em;
-            }
-        }
-    }
-
-    &.subtask > .task-head {
-        background-color: #ededed;
-        color: @dark;
-
-        > .left > button {
-            color: @dark;
-
-            &:hover {
-                background-color: white;
-                color: @purple;
-            }
-        }
-    }
-
-    &.active {
-        > .task-head {
-            background-color: @purple;
-            color: white;
-
-            > .left > button {
+        &.active {
+            > .task-head {
+                background-color: @purple;
                 color: white;
 
-                &:hover {
-                    color: @purple;
+                > .left > button {
+                    color: white;
+
+                    &:hover {
+                        color: @purple;
+                    }
                 }
             }
         }
-    }
 
-    > .task-controls {
-        display: flex;
+        > .task-controls {
+            display: flex;
 
-        > button {
-            flex: 1;
+            > button {
+                flex: 1;
+            }
         }
-    }
 
-    > .task-body {
-        padding: 0.5em 1em;
+        > .task-body {
+            padding: 0.5em 1em;
 
-        .timeslots {
-            .timeslot {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                padding: 0.25em 0;
+            .timeslots {
+                .timeslot {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 0.25em 0;
 
-                > .timeslot-controls {
-                    flex: 1;
+                    > .timeslot-controls {
+                        flex: 1;
 
-                    .timeslot-remove {
-                        color: @dark;
-                        display: none;
-                        padding-right: 1em;
+                        .timeslot-remove {
+                            color: @dark;
+                            display: none;
+                            padding-right: 1em;
 
-                        &:hover {
-                            color: #cc0000;
-                            cursor: pointer;
+                            &:hover {
+                                color: #cc0000;
+                                cursor: pointer;
+                            }
                         }
                     }
-                }
 
-                &:hover {
-                    > .timeslot-controls > .timeslot-remove {
-                        display: inline;
+                    &:hover {
+                        > .timeslot-controls > .timeslot-remove {
+                            display: inline;
+                        }
                     }
-                }
 
-                .timeslot-period {
-                    flex: 4;
-                    text-align: center;
-                    display: flex;
-
-                    .timeslot-begin {
+                    .timeslot-period {
                         flex: 4;
+                        text-align: center;
+                        display: flex;
+
+                        .timeslot-begin {
+                            flex: 4;
+                            text-align: right;
+
+                            > .edit-time {
+                                text-align: right;
+                            }
+
+                            &:hover {
+                                cursor: text;
+                            }
+                        }
+
+                        .timeslot-separator {
+                            flex: 1;
+                        }
+
+                        .timeslot-end {
+                            flex: 4;
+                            text-align: left;
+
+                            &:hover {
+                                cursor: text;
+                            }
+                        }
+
+                        .edit-time {
+                            width: 4em;
+                            border: none;
+                            font-size: 1em;
+                            outline: none;
+                            padding: 0;
+                            font-weight: bold;
+                        }
+                    }
+
+                    &.active .timeslot-end {
+                        font-weight: bold;
+                        color: @purple;
+                    }
+
+                    .timeslot-right {
+                        flex: 1;
                         text-align: right;
 
-                        > .edit-time {
+                        .timeslot-duration {
+                            font-size: 0.9em;
                             text-align: right;
                         }
-
-                        &:hover {
-                            cursor: text;
-                        }
-                    }
-
-                    .timeslot-separator {
-                        flex: 1;
-                    }
-
-                    .timeslot-end {
-                        flex: 4;
-                        text-align: left;
-
-                        &:hover {
-                            cursor: text;
-                        }
-                    }
-
-                    .edit-time {
-                        width: 4em;
-                        border: none;
-                        font-size: 1em;
-                        outline: none;
-                        padding: 0;
-                        font-weight: bold;
-                    }
-                }
-
-                &.active .timeslot-end {
-                    font-weight: bold;
-                    color: @purple;
-                }
-
-                .timeslot-right {
-                    flex: 1;
-                    text-align: right;
-
-                    .timeslot-duration {
-                        font-size: 0.9em;
-                        text-align: right;
                     }
                 }
             }
         }
-    }
 
-    &.collapsed {
-        > .task-body {
-            display: none;
+        &.collapsed {
+            > .task-body {
+                display: none;
+            }
         }
     }
+
+    main {
+        flex: 1;
+    }
 }
 
-main {
-    flex: 5;
-}
-
-aside {
-    flex: 3;
+@media screen and (max-width: 600px) {
+    #time-tracker {
+        font-size: ~"calc(12px + 4 * ((100vw - 200px) / 600))";
+    }
 }

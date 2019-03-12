@@ -22,19 +22,30 @@
     <body>
         <div id="time-tracker" :class="{ loaded: 1 }">
             <main>
-                <div class="new-task-container">
+                <div class="top-container">
+                    <div class="spacer"></div>
                     <input
                         class="new-task"
                         type="text"
                         placeholder="New task"
                         @keyup.enter="inputTask($event.target)"
                     />
+                    <div
+                        class="total-duration"
+                        :class="{ visible: totalDuration >= 1 }"
+                    >
+                        <i class="far fa-clock"></i>
+                        <span
+                            class="clock"
+                            v-text="formatDuration(totalDuration, { showSeconds: false })"
+                        ></span>
+                    </div>
                 </div>
 
                 <task
                     v-for="task in rootTasks"
                     :key="task.id"
-                    v-bind="{ task }"
+                    v-bind="{ task, formatDuration }"
                     @add-task="addTask($event)"
                     @remove-task="removeTask($event)"
                     @reset-task="resetTask($event)"
@@ -148,7 +159,7 @@
                         <task
                             v-for="subTask in task.subTasks"
                             :key="subTask.id"
-                            v-bind="{ task:subTask }"
+                            v-bind="{ task:subTask, formatDuration }"
                             @add-task="$emit('add-task', $event)"
                             @remove-task="$emit('remove-task', $event)"
                             @reset-task="$emit('reset-task', $event)"

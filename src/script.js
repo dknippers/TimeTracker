@@ -60,6 +60,13 @@
 
         activeTask: function() {
             return this.tasks.find(task => task.isActive);
+        },
+
+        totalDuration: function() {
+            return this.rootTasks.reduce(
+                (sum, task) => sum + this.getTaskDuration(task),
+                0
+            );
         }
     };
 
@@ -496,11 +503,34 @@
             }
 
             return taskSeconds + subTasksSeconds;
+        },
+
+        formatDuration: function(
+            duration,
+            {
+                showZero = true,
+                showSeconds = true,
+                showMinutes = true,
+                showHours = true
+            } = {}
+        ) {
+            const rounded = Math.round(duration);
+            const format = utils.secondsToHms(rounded, {
+                showSeconds,
+                showMinutes,
+                showHours
+            });
+
+            if (!showZero && /^0[hms]$/.test(format)) {
+                return null;
+            } else {
+                return format;
+            }
         }
     };
 
     Vue.component("task", {
-        props: ["task", "parentId"],
+        props: ["task", "parentId", "formatDuration"],
         template: "#task",
 
         mounted: function() {
@@ -545,29 +575,6 @@
         },
 
         methods: {
-            formatDuration: function(
-                duration,
-                {
-                    showZero = true,
-                    showSeconds = true,
-                    showMinutes = true,
-                    showHours = true
-                } = {}
-            ) {
-                const rounded = Math.round(duration);
-                const format = utils.secondsToHms(rounded, {
-                    showSeconds,
-                    showMinutes,
-                    showHours
-                });
-
-                if (!showZero && /^0[hms]$/.test(format)) {
-                    return null;
-                } else {
-                    return format;
-                }
-            },
-
             formatTimestamp: function(timestamp) {
                 if (typeof timestamp !== "number") {
                     if (timestamp != null) {
