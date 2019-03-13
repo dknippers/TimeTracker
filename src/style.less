@@ -8,7 +8,22 @@
 }
 
 html {
-    font-size: 100%;
+    // Minimum font-size (usually 12px)
+    font-size: 75%;
+}
+
+@media screen and (min-width: 300px) {
+    html {
+        // Between 300px and 600px: dynamically scale from 12px to 16px
+        font-size: ~"calc(12px + 4 * ((100vw - 300px) / (600 - 300)))";
+    }
+}
+
+@media screen and (min-width: 600px) {
+    html {
+        // Maximum font-size (usually 16px)
+        font-size: 100%;
+    }
 }
 
 body {
@@ -70,7 +85,7 @@ body {
         }
 
         .total-duration {
-            color: #aaa;
+            color: #888a85;
             text-align: right;
             font-size: 1em;
             flex: 1;
@@ -115,6 +130,10 @@ body {
         &.subtask {
             margin-top: 0.5em;
             margin-bottom: 0.5em;
+
+            ~ .subtask {
+                margin-top: 1em;
+            }
         }
 
         &.dropzone {
@@ -210,7 +229,7 @@ body {
         }
 
         &.subtask > .task-head {
-            background-color: #ededed;
+            background-color: #d3d7cf;
             color: @dark;
 
             > .left > button {
@@ -345,11 +364,5 @@ body {
 
     main {
         flex: 1;
-    }
-}
-
-@media screen and (max-width: 600px) {
-    #time-tracker {
-        font-size: ~"calc(12px + 4 * ((100vw - 200px) / 600))";
     }
 }
