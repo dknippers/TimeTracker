@@ -169,8 +169,12 @@ body {
                     box-shadow: none;
                     color: @light;
 
-                    &.add-subtask {
-                        font-size: 1em;
+                    &.add-subtask > i {
+                        font-size: 1.2em;
+                    }
+
+                    &.toggle-collapse > i {
+                        font-size: 1.2em;
                     }
 
                     &:hover {
@@ -278,26 +282,30 @@ body {
                     > .timeslot-controls {
                         flex: 1;
 
-                        .timeslot-remove {
-                            color: @dark;
+                        > .timeslot-control {
                             display: none;
-                            padding-right: 1em;
+                            color: @dark;
+                            padding: 0.35em;
 
                             &:hover {
-                                color: #cc0000;
                                 cursor: pointer;
+                                color: @purple;
+
+                                &.timeslot-remove {
+                                    color: #cc0000;
+                                }
                             }
                         }
                     }
 
                     &:hover {
-                        > .timeslot-controls > .timeslot-remove {
+                        > .timeslot-controls > .timeslot-control {
                             display: inline;
                         }
                     }
 
                     .timeslot-period {
-                        flex: 4;
+                        flex: 2;
                         text-align: center;
                         display: flex;
 
@@ -328,7 +336,7 @@ body {
                         }
 
                         .edit-time {
-                            width: 4em;
+                            width: 3em;
                             border: none;
                             font-size: 1em;
                             outline: none;

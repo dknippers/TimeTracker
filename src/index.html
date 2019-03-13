@@ -45,16 +45,17 @@
                 <task
                     v-for="task in rootTasks"
                     :key="task.id"
-                    v-bind="{ task, formatDuration }"
+                    v-bind="{ task }"
                     @add-task="addTask($event)"
                     @remove-task="removeTask($event)"
                     @reset-task="resetTask($event)"
                     @start-task="startTask($event)"
                     @stop-task="stopTask($event)"
-                    @set-parent-id="setParentId($event)"
+                    @move-task="moveTask($event)"
                     @change-timeslot-begin="changeTimeslotBegin($event)"
                     @change-timeslot-end="changeTimeslotEnd($event)"
                     @remove-timeslot="removeTimeslot($event)"
+                    @timeslot-to-new-task="timeslotToNewTask($event)"
                 >
                 </task>
 
@@ -79,10 +80,6 @@
             >
                 <div class="task-head">
                     <div class="left">
-                        <button v-if="0" type="button" @click="collapsed = !collapsed">
-                            <span v-if="collapsed" class="expand">▼</span>
-                            <span v-if="!collapsed" class="collapse">▲</span>
-                        </button>
                         <button type="button" v-if="!task.isActive" @click="$emit('start-task', task.id)">
                             <i class="fas fa-play"></i>
                         </button>
@@ -90,7 +87,11 @@
                             <i class="fas fa-square"></i>
                         </button>
                         <button type="button" @click="$emit('add-task', { parentId: task.id })" class="add-subtask">
-                            <i class="fas fa-plus-circle"></i>
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button type="button" class="toggle-collapse" @click="collapsed = !collapsed">
+                            <i v-if="collapsed" class="fas fa-caret-down"></i>
+                            <i v-if="!collapsed" class="fas fa-caret-up"></i>
                         </button>
                         <button type="button" @click="$emit('remove-task', task.id)">
                             <i class="fas fa-trash-alt"></i>
@@ -113,7 +114,10 @@
                         <div v-for="timeslot in task.timeslots" :key="timeslot.id"
                             class="timeslot" :class="{ active: timeslot.isActive }">
                             <span class="timeslot-controls">
-                                <span class="timeslot-remove" @click="$emit('remove-timeslot', timeslot.id)">
+                                <span class="timeslot-control timeslot-to-task" @click="$emit('timeslot-to-new-task', timeslot.id)">
+                                    <i class="far fa-window-maximize"></i>
+                                </span>
+                                <span class="timeslot-control timeslot-remove" @click="$emit('remove-timeslot', timeslot.id)">
                                     <i class="fas fa-trash-alt"></i>
                                 </span>
                             </span>
@@ -159,16 +163,17 @@
                         <task
                             v-for="subTask in task.subTasks"
                             :key="subTask.id"
-                            v-bind="{ task:subTask, formatDuration }"
+                            v-bind="{ task:subTask }"
                             @add-task="$emit('add-task', $event)"
                             @remove-task="$emit('remove-task', $event)"
                             @reset-task="$emit('reset-task', $event)"
                             @start-task="$emit('start-task', $event)"
                             @stop-task="$emit('stop-task', $event)"
-                            @set-parent-id="$emit('set-parent-id', $event)"
+                            @move-task="$emit('move-task', $event)"
                             @change-timeslot-begin="$emit('change-timeslot-begin', $event)"
                             @change-timeslot-end="$emit('change-timeslot-end', $event)"
                             @remove-timeslot="$emit('remove-timeslot', $event)"
+                            @timeslot-to-new-task="$emit('timeslot-to-new-task', $event)"
                         />
                     </div>
                 </div>

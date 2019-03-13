@@ -62,6 +62,18 @@
             return this.tasks.find(task => task.isActive);
         },
 
+        ancestors: function() {
+            const ancestors = {};
+
+            const cache = {};
+
+            for (const task of this.taskList) {
+                ancestors[task.id] = this.getAncestors(task, cache);
+            }
+
+            return ancestors;
+        },
+
         totalDuration: function() {
             return this.rootTasks.reduce(
                 (sum, task) => sum + this.getTaskDuration(task),
@@ -169,9 +181,12 @@
         function timeToTimestamp(time) {
             const timeRe = /^[012]?[0-9]:[0-5][0-9]$/;
             if (!timeRe.test(time)) {
-                console.warn(
-                    `Invalid time string, should match RegExp ${timeRe}`
-                );
+                if (time) {
+                    console.warn(
+                        `Invalid time string, should match RegExp ${timeRe} but got "${time}"`
+                    );
+                }
+
                 return null;
             }
 
@@ -196,6 +211,49 @@
             }
         }
 
+        function formatDuration(
+            duration,
+            {
+                showZero = true,
+                showSeconds = true,
+                showMinutes = true,
+                showHours = true
+            } = {}
+        ) {
+            const rounded = Math.round(duration);
+            const format = utils.secondsToHms(rounded, {
+                showSeconds,
+                showMinutes,
+                showHours
+            });
+
+            if (!showZero && /^0[hms]$/.test(format)) {
+                return null;
+            } else {
+                return format;
+            }
+        }
+
+        function formatTimestamp(timestamp) {
+            if (typeof timestamp !== "number") {
+                if (timestamp != null) {
+                    // User did pass in something so warn about wrong input here.
+                    console.warn(
+                        `Timestamp should be a number, but got a ${typeof timestamp}`
+                    );
+                }
+
+                return null;
+            }
+
+            const date = new Date(timestamp);
+
+            var hours = date.getHours();
+            var minutes = date.getMinutes();
+
+            return utils.zeropad(hours, 2) + ":" + utils.zeropad(minutes, 2);
+        }
+
         function sort(array, selector) {
             return array.sort((a, b) => {
                 const vA = selector(a);
@@ -212,7 +270,9 @@
             sort,
             zeropad,
             pad,
-            keyedObjectToArray
+            keyedObjectToArray,
+            formatDuration,
+            formatTimestamp
         };
     })();
 
@@ -256,6 +316,30 @@
             });
         },
 
+        getAncestors: function(task, cache) {
+            const parent = this.tasksById[task.parentId];
+            if (parent == null) {
+                return [];
+            }
+
+            if (cache[task.id] != null) {
+                return cache[task.id];
+            }
+
+            if (parent != null) {
+                const ancestors = [parent, ...this.getAncestors(parent, cache)];
+                cache[task.id] = ancestors;
+                return ancestors;
+            }
+        },
+
+        /**
+         * @returns {boolean} true if taskA is an ancestor of taskB
+         */
+        isAncestor: function(taskA, taskB) {
+            return this.ancestors[taskB.id].indexOf(taskA) > -1;
+        },
+
         save: function() {
             var toSave = {};
             for (var key in state) {
@@ -290,14 +374,18 @@
         createTask: function(name, parentId) {
             const id = this.nextId++;
 
-            return {
+            const task = {
                 id,
                 parentId,
                 name: name
             };
+
+            Vue.set(this.tasksById, id, task);
+
+            return task;
         },
 
-        setParentId: function(opts) {
+        moveTask: function(opts) {
             var taskId = opts.taskId;
             var parentId = opts.parentId;
 
@@ -306,22 +394,23 @@
                 const parent = this.tasksById[parentId];
 
                 if (
-                    task != null &&
-                    parent != null &&
-                    task.parentId !== parent.id
+                    task == null ||
+                    parent == null ||
+                    task.parentId === parent.id
                 ) {
-                    if (parent.parentId === task.id) {
-                        this.updateTask(parentId, task => {
-                            Vue.delete(task, "parentId");
-                            return task;
-                        });
-                    }
-
-                    this.updateTask(taskId, task => {
-                        Vue.set(task, "parentId", parentId);
-                        return task;
-                    });
+                    return;
                 }
+
+                if (this.isAncestor(task, parent)) {
+                    // A task cannot be moved to it's descendant,
+                    // that can create a cycle
+                    return;
+                }
+
+                this.updateTask(taskId, task => {
+                    Vue.set(task, "parentId", parentId);
+                    return task;
+                });
             }
         },
 
@@ -358,9 +447,7 @@
 
         updateTask: function(id, updateFn, doneFn) {
             const currentTask = this.tasksById[id];
-
-            const newTask = updateFn(currentTask);
-            Vue.set(this.tasksById, newTask.id, newTask);
+            updateFn(currentTask);
             if (typeof doneFn === "function") {
                 doneFn();
             }
@@ -450,6 +537,14 @@
             Vue.delete(this.timeslotsById, id);
         },
 
+        timeslotToNewTask: function(id) {
+            this.updateTimeslot(id, timeslot => {
+                const newTask = this.createTask(null, timeslot.taskId);
+                Vue.set(timeslot, "taskId", newTask.id);
+                return timeslot;
+            });
+        },
+
         clearAll: function() {
             this.nextId = initialId;
             for (var taskId in this.tasksById) {
@@ -505,32 +600,11 @@
             return taskSeconds + subTasksSeconds;
         },
 
-        formatDuration: function(
-            duration,
-            {
-                showZero = true,
-                showSeconds = true,
-                showMinutes = true,
-                showHours = true
-            } = {}
-        ) {
-            const rounded = Math.round(duration);
-            const format = utils.secondsToHms(rounded, {
-                showSeconds,
-                showMinutes,
-                showHours
-            });
-
-            if (!showZero && /^0[hms]$/.test(format)) {
-                return null;
-            } else {
-                return format;
-            }
-        }
+        formatDuration: utils.formatDuration
     };
 
     Vue.component("task", {
-        props: ["task", "parentId", "formatDuration"],
+        props: ["task", "parentId"],
         template: "#task",
 
         mounted: function() {
@@ -575,27 +649,8 @@
         },
 
         methods: {
-            formatTimestamp: function(timestamp) {
-                if (typeof timestamp !== "number") {
-                    if (timestamp != null) {
-                        // User did pass in something so warn about wrong input here.
-                        console.warn(
-                            `Timestamp should be a number, but got a ${typeof timestamp}`
-                        );
-                    }
-
-                    return null;
-                }
-
-                const date = new Date(timestamp);
-
-                var hours = date.getHours();
-                var minutes = date.getMinutes();
-
-                return (
-                    utils.zeropad(hours, 2) + ":" + utils.zeropad(minutes, 2)
-                );
-            },
+            formatTimestamp: utils.formatTimestamp,
+            formatDuration: utils.formatDuration,
 
             doEditBegin: function(timeslotId) {
                 Vue.set(this.editBegin, timeslotId, true);
@@ -655,7 +710,7 @@
                 );
 
                 if (!isNaN(droppedTaskId)) {
-                    this.$emit("set-parent-id", {
+                    this.$emit("move-task", {
                         taskId: droppedTaskId,
                         parentId: this.task.id
                     });
