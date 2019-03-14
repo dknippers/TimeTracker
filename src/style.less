@@ -34,7 +34,7 @@ body {
 
 #time-tracker {
     padding: 2em;
-    margin: 2em auto 0 auto;
+    margin: 1em auto 0 auto;
     display: none;
     max-width: 600px;
     color: @dark;
@@ -72,23 +72,33 @@ body {
         display: flex;
         align-items: center;
 
-        .spacer {
+        > .left,
+        > .right {
             flex: 1;
         }
 
-        input.new-task {
+        @media screen and (max-width: 320px) {
+            > .left {
+                flex: 0;
+            }
+        }
+
+        > .center {
+            flex: 2;
+        }
+
+        .new-task {
             font-size: 1em;
             padding: 0.8em 1.2em;
             box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
             border: 0;
-            flex: 2;
+            width: 100%;
         }
 
         .total-duration {
             color: #888a85;
             text-align: right;
             font-size: 1em;
-            flex: 1;
             margin-left: 0.5em;
             visibility: hidden;
 
@@ -201,11 +211,10 @@ body {
             }
 
             > .center {
-                flex: 4;
+                flex: 3;
 
                 .task-name {
                     padding: 0.5em 0;
-                    flex: 6;
                     text-align: center;
 
                     &:hover {
@@ -214,9 +223,9 @@ body {
 
                     &.edit {
                         width: 100%;
-                        font-size: 1em;
                         border: none;
-                        outline: none;
+                        font-size: 1em;
+                        outline: 1px auto #333399;
                     }
                 }
             }
@@ -360,6 +369,10 @@ body {
                         }
                     }
                 }
+            }
+
+            .subtasks {
+                font-size: 0.96em;
             }
         }
 

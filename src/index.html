@@ -23,22 +23,26 @@
         <div id="time-tracker" :class="{ loaded: 1 }">
             <main>
                 <div class="top-container">
-                    <div class="spacer"></div>
-                    <input
-                        class="new-task"
-                        type="text"
-                        placeholder="New task"
-                        @keyup.enter="inputTask($event.target)"
-                    />
-                    <div
-                        class="total-duration"
-                        :class="{ visible: totalDuration >= 1 }"
-                    >
-                        <i class="far fa-clock"></i>
-                        <span
-                            class="clock"
-                            v-text="formatDuration(totalDuration, { showSeconds: false })"
-                        ></span>
+                    <div class="left"></div>
+                    <div class="center">
+                        <input
+                            class="new-task"
+                            type="text"
+                            placeholder="New task"
+                            @keyup.enter="inputTask($event.target)"
+                        />
+                    </div>
+                    <div class="right">
+                        <div
+                            class="total-duration"
+                            :class="{ visible: totalDuration >= 1 }"
+                        >
+                            <i class="far fa-clock"></i>
+                            <span
+                                class="clock"
+                                v-text="formatDuration(totalDuration, { showSeconds: false })"
+                            ></span>
+                        </div>
                     </div>
                 </div>
 
