@@ -35,7 +35,7 @@
                     <div class="right">
                         <div
                             class="total-duration"
-                            :class="{ visible: totalDuration >= 1 }"
+                            :class="{ visible: Math.abs(Math.round(totalDuration)) >= 1 }"
                         >
                             <i class="far fa-clock"></i>
                             <span

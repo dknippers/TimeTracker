@@ -98,7 +98,8 @@
                 round = false
             } = {}
         ) {
-            let seconds = totalSeconds;
+            const isNegative = totalSeconds < 0;
+            let seconds = Math.abs(totalSeconds);
 
             const hours = Math.floor(seconds / 3600);
             seconds %= 3600;
@@ -125,7 +126,7 @@
                 }
             }
 
-            return hms;
+            return (isNegative ? "-" : "") + hms;
         }
 
         function saveToStorage(key, value) {
@@ -343,7 +344,12 @@
         save: function() {
             var toSave = {};
             for (var key in state) {
-                if (key.indexOf("__") === 0 || key === "now") {
+                if (
+                    key.indexOf("_") === 0 ||
+                    key.indexOf("$") === 0 ||
+                    key === "now"
+                ) {
+                    // Skip internal (_ / $) values and this.now
                     continue;
                 }
 
@@ -520,7 +526,7 @@
         createTimeslot: function(taskId) {
             const id = this.nextId++;
 
-            this.now = Date.now();
+            this.setNow();
 
             const timeslot = {
                 id,
@@ -600,7 +606,43 @@
             return taskSeconds + subTasksSeconds;
         },
 
-        formatDuration: utils.formatDuration
+        updateDocumentTitle: function() {
+            if (this.activeTask == null || this.activeTask.duration == null) {
+                if (document.title !== this.documentTitle) {
+                    document.title = this.documentTitle;
+                }
+            } else {
+                const duration = utils.formatDuration(
+                    this.activeTask.duration,
+                    { showZero: false, showSeconds: false }
+                );
+
+                if (duration != null) {
+                    const name = this.activeTask.name || "";
+                    document.title = `${duration} - ${name}`;
+                }
+            }
+        },
+
+        formatDuration: utils.formatDuration,
+
+        setNow: function() {
+            this.now = Date.now();
+        },
+
+        skipSave: function(fn) {
+            this.dontSave = 1;
+            fn();
+            Vue.nextTick(() => delete this.dontSave);
+        },
+
+        mainLoop: function(timeout) {
+            this.skipSave(this.setNow);
+
+            this.updateDocumentTitle();
+
+            setTimeout(() => this.mainLoop(timeout), timeout);
+        }
     };
 
     Vue.component("task", {
@@ -746,7 +788,7 @@
         }
     });
 
-    var app = new Vue({
+    const app = new Vue({
         el: "#time-tracker",
         data: state,
         methods: methods,
@@ -760,14 +802,12 @@
         },
 
         mounted: function() {
+            this.documentTitle = document.title;
+
+            Vue.nextTick(() => this.mainLoop(1000));
+
             this.$el.addEventListener("drop", this.onDrop);
             this.$el.addEventListener("dragover", this.onDragOver);
-
-            setInterval(() => {
-                this._$dontSave = 1;
-                this.now = Date.now();
-                Vue.nextTick(() => delete this._$dontSave);
-            }, 1000);
         },
 
         beforeDestroy: function() {
@@ -776,7 +816,7 @@
         },
 
         updated: function() {
-            if (!this._$dontSave) {
+            if (!this.dontSave) {
                 this.save();
             }
         }
