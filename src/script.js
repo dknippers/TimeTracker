@@ -614,6 +614,8 @@
             this.$el.addEventListener("dragleave", this.onDragLeave);
             this.$el.addEventListener("drop", this.onDrop);
 
+            document.addEventListener("click", this.onClick);
+
             if (!this.task.name) {
                 this.editName = true;
             }
@@ -625,6 +627,8 @@
             this.$el.removeEventListener("dragover", this.onDragOver);
             this.$el.removeEventListener("drop", this.onDrop);
             this.$el.removeEventListener("dragleave", this.onDragLeave);
+
+            document.removeEventListener("click", this.onClick);
         },
 
         data: function() {
@@ -714,6 +718,23 @@
                         taskId: droppedTaskId,
                         parentId: this.task.id
                     });
+                }
+            },
+
+            onClick: function(ev) {
+                if (ev.target == null || ev.target.parentNode == null) {
+                    // Ignore
+                    return;
+                }
+
+                const task = ev.target.closest(".task");
+                if (task !== this.$el) {
+                    if (this.task.name) {
+                        this.editName = false;
+                    }
+
+                    this.editBegin = {};
+                    this.editEnd = {};
                 }
             },
 
