@@ -111,7 +111,7 @@
 
             if (showHours) mappings.push([hours, "h"]);
             if (showMinutes) mappings.push([minutes, "m"]);
-            if (showSeconds || totalSeconds < 60) mappings.push([seconds, "s"]);
+            if (showSeconds || (hours === 0 && minutes === 0)) mappings.push([seconds, "s"]);
 
             let hms = "";
             let empty = true;
