@@ -93,7 +93,10 @@ body {
             box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
             border: 0;
             width: 100%;
-            outline: 1px auto @purple;
+
+            &:focus {
+                outline: 1px auto @purple;
+            }            
         }
 
         .total-duration {
@@ -226,7 +229,10 @@ body {
                         width: 100%;
                         border: none;
                         font-size: 1em;
-                        outline: 1px auto @purple;
+
+                        &:focus {
+                            outline: 1px auto @purple;
+                        }                        
                     }
                 }
             }
