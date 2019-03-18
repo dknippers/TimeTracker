@@ -51,14 +51,14 @@
                     :key="task.id"
                     v-bind="{ task }"
                     @add-task="addTask($event)"
-                    @remove-task="removeTask($event)"
+                    @remove-task="askToRemoveTask($event)"
                     @reset-task="resetTask($event)"
                     @start-task="startTask($event)"
                     @stop-task="stopTask($event)"
                     @move-task="moveTask($event)"
                     @change-timeslot-begin="changeTimeslotBegin($event)"
                     @change-timeslot-end="changeTimeslotEnd($event)"
-                    @remove-timeslot="removeTimeslot($event)"
+                    @remove-timeslot="askToRemoveTimeslot($event)"
                     @timeslot-to-new-task="timeslotToNewTask($event)"
                 >
                 </task>
@@ -74,6 +74,11 @@
                     </button>
                 </div>
             </main>
+
+            <confirm-dialog
+                v-if="ui.confirm.ok"
+                :config="ui.confirm"
+            ></confirm-dialog>
         </div>
 
         <script type="x-template" id="task">
@@ -179,6 +184,18 @@
                             @remove-timeslot="$emit('remove-timeslot', $event)"
                             @timeslot-to-new-task="$emit('timeslot-to-new-task', $event)"
                         />
+                    </div>
+                </div>
+            </div>
+        </script>
+
+        <script type="x-template" id="confirm-dialog">
+            <div class="confirm-dialog-wrapper">
+                <div class="confirm-dialog">
+                    <div class="text" v-text="config.text"></div>
+                    <div class="buttons">
+                        <button class="cancel" type="button" @click="cancel()" v-text="config.cancelText"></button>
+                        <button class="ok" type="button" @click="ok()" v-text="config.okText"></button>
                     </div>
                 </div>
             </div>

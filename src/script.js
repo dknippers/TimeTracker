@@ -6,7 +6,18 @@
         tasksById: {},
         timeslotsById: {},
 
-        now: Date.now()
+        now: Date.now(),
+
+        ui: {
+            confirm: {
+                ok: null,
+                okText: "Yes",
+                cancel: null,
+                cancelText: "No",
+                text: null,
+                always: null
+            }
+        }
     };
 
     var computed = {
@@ -111,7 +122,8 @@
 
             if (showHours) mappings.push([hours, "h"]);
             if (showMinutes) mappings.push([minutes, "m"]);
-            if (showSeconds || (hours === 0 && minutes === 0)) mappings.push([seconds, "s"]);
+            if (showSeconds || (hours === 0 && minutes === 0))
+                mappings.push([seconds, "s"]);
 
             let hms = "";
             let empty = true;
@@ -147,6 +159,13 @@
                 return JSON.parse(value);
             } catch (err) {
                 console.error(err);
+            }
+        }
+
+        function runIfFn(fn, thisArg) {
+            if (typeof fn === "function") {
+                var args = [].slice.apply(arguments).slice(2);
+                fn.apply(thisArg, args);
             }
         }
 
@@ -273,7 +292,8 @@
             pad,
             keyedObjectToArray,
             formatDuration,
-            formatTimestamp
+            formatTimestamp,
+            runIfFn
         };
     })();
 
@@ -347,7 +367,8 @@
                 if (
                     key.indexOf("_") === 0 ||
                     key.indexOf("$") === 0 ||
-                    key === "now"
+                    key === "now" ||
+                    key === "ui"
                 ) {
                     // Skip internal (_ / $) values and this.now
                     continue;
@@ -440,6 +461,9 @@
 
         onDrop: function(ev) {
             const taskId = ev.dataTransfer.getData("taskId");
+            if (!taskId) {
+                return;
+            }
 
             this.updateTask(taskId, task => {
                 Vue.delete(task, "parentId");
@@ -514,13 +538,57 @@
             const timeslots = this.timeslotsByTask[id];
             if (Array.isArray(timeslots)) {
                 for (const timeslot of timeslots) {
-                    Vue.delete(this.timeslotsById, timeslot.id);
+                    this.removeTimeslot(timeslot.id);
                 }
             }
 
             if (this.tasks.length === 0) {
                 this.nextId = initialId;
             }
+        },
+
+        askToRemoveTask: function(id) {
+            const task = this.tasksById[id];
+            if (task == null) {
+                return;
+            }
+
+            const taskName = task.name || "<no name>";
+
+            this.showConfirmation(
+                `Delete ${taskName}?`,
+                () => this.removeTask(id),
+                this.clearConfirmation
+            );
+        },
+
+        showConfirmation: function(
+            text,
+            ok,
+            always,
+            cancel,
+            okText,
+            cancelText
+        ) {
+            Vue.set(state.ui.confirm, "text", text);
+            Vue.set(state.ui.confirm, "ok", ok);
+            Vue.set(state.ui.confirm, "always", always);
+            Vue.set(state.ui.confirm, "cancel", cancel);
+
+            if (okText) {
+                Vue.set(state.ui.confirm, "okText", okText);
+            }
+
+            if (cancelText) {
+                Vue.set(state.ui.confirm, "cancelText", cancelText);
+            }
+        },
+
+        clearConfirmation: function() {
+            state.ui.confirm.ok = null;
+            state.ui.confirm.cancel = null;
+            state.ui.confirm.always = null;
+            state.ui.confirm.text = null;
         },
 
         createTimeslot: function(taskId) {
@@ -543,6 +611,26 @@
             Vue.delete(this.timeslotsById, id);
         },
 
+        askToRemoveTimeslot: function(id) {
+            const timeslot = this.timeslotsById[id];
+            if (timeslot == null) {
+                return;
+            }
+
+            const task = this.tasksById[timeslot.taskId];
+            const taskName = (task && task.name) || "<no task>";
+
+            const computed = this.getComputedTimeslot(timeslot);
+            const begin = utils.formatTimestamp(computed.begin);
+            const end = utils.formatTimestamp(computed.end);
+
+            this.showConfirmation(
+                `Remove ${begin} - ${end} of ${taskName}?`,
+                () => this.removeTimeslot(id),
+                this.clearConfirmation
+            );
+        },
+
         timeslotToNewTask: function(id) {
             this.updateTimeslot(id, timeslot => {
                 const newTask = this.createTask(null, timeslot.taskId);
@@ -552,13 +640,21 @@
         },
 
         clearAll: function() {
-            this.nextId = initialId;
-            for (var taskId in this.tasksById) {
-                Vue.delete(this.tasksById, taskId);
-            }
-            for (var tsId in this.timeslotsById) {
-                Vue.delete(this.timeslotsById, tsId);
-            }
+            const remove = () => {
+                this.nextId = initialId;
+                for (var taskId in this.tasksById) {
+                    Vue.delete(this.tasksById, taskId);
+                }
+                for (var tsId in this.timeslotsById) {
+                    Vue.delete(this.timeslotsById, tsId);
+                }
+            };
+
+            this.showConfirmation(
+                "Remove all tasks?",
+                remove,
+                this.clearConfirmation
+            );
         },
 
         resetTask: function(id) {
@@ -785,6 +881,40 @@
                     this.editName = !this.editName;
                 }
             }
+        }
+    });
+
+    Vue.component("confirm-dialog", {
+        template: "#confirm-dialog",
+        props: ["config"],
+        methods: {
+            ok: function() {
+                utils.runIfFn(this.config.ok);
+                utils.runIfFn(this.config.always);
+            },
+
+            cancel: function() {
+                utils.runIfFn(this.config.cancel);
+                utils.runIfFn(this.config.always);
+            },
+
+            onClick: function(ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+
+                if (ev.target === this.$el) {
+                    utils.runIfFn(this.cancel);
+                    utils.runIfFn(this.always);
+                }
+            }
+        },
+
+        mounted: function() {
+            this.$el.addEventListener("click", this.onClick);
+        },
+
+        beforeDestroy: function() {
+            this.$el.removeEventListener("click", this.onClick);
         }
     });
 
