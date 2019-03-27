@@ -72,6 +72,7 @@
                     @change-timeslot-end="changeTimeslotEnd($event)"
                     @remove-timeslot="askToRemoveTimeslot($event)"
                     @timeslot-to-new-task="timeslotToNewTask($event)"
+                    @timeslot-to-task="timeslotToTask($event)"
                 >
                 </task>
 
@@ -135,8 +136,13 @@
                         <div v-for="timeslot in task.timeslots" :key="timeslot.id"
                             class="timeslot" :class="{ active: timeslot.isActive }">
                             <span class="timeslot-controls">
-                                <span class="timeslot-control timeslot-to-task" @click="$emit('timeslot-to-new-task', timeslot.id)">
+                                <span class="timeslot-control" @click="$emit('timeslot-to-new-task', timeslot.id)">
                                     <i class="far fa-window-maximize"></i>
+                                </span>
+                                <span class="timeslot-control timeslot-to-task"
+                                    v-if="task.parentId"
+                                    @click="$emit('timeslot-to-task', { id: timeslot.id, taskId: task.parentId })">
+                                    <i class="fas fa-sign-out-alt"></i>
                                 </span>
                                 <span class="timeslot-control timeslot-remove" @click="$emit('remove-timeslot', timeslot.id)">
                                     <i class="fas fa-trash-alt"></i>
@@ -195,6 +201,7 @@
                             @change-timeslot-end="$emit('change-timeslot-end', $event)"
                             @remove-timeslot="$emit('remove-timeslot', $event)"
                             @timeslot-to-new-task="$emit('timeslot-to-new-task', $event)"
+                            @timeslot-to-task="$emit('timeslot-to-task', $event)"
                         />
                     </div>
                 </div>

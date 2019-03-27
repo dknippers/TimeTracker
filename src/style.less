@@ -304,6 +304,16 @@ body {
                             color: @dark;
                             padding: 0.35em;
 
+                            > i {
+                                display: inline-block;
+                            }
+
+                            &.timeslot-to-task {
+                                > i {
+                                    transform: rotate(-90deg);
+                                }
+                            }
+
                             &:hover {
                                 cursor: pointer;
                                 color: @purple;

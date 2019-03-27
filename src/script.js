@@ -627,9 +627,26 @@
         },
 
         timeslotToNewTask: function(id) {
+            const timeslot = this.timeslotsById[id];
+
+            if (timeslot == null) {
+                return;
+            }
+
+            const newTask = this.createTask(null, timeslot.taskId);
+            this.timeslotToTask({ id, taskId: newTask.id });
+        },
+
+        timeslotToTask: function(opts) {
+            const id = opts.id;
+            const taskId = opts.taskId;
+
+            if (this.tasksById[taskId] == null) {
+                return;
+            }
+
             this.updateTimeslot(id, timeslot => {
-                const newTask = this.createTask(null, timeslot.taskId);
-                Vue.set(timeslot, "taskId", newTask.id);
+                Vue.set(timeslot, "taskId", taskId);
                 return timeslot;
             });
         },
