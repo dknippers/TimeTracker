@@ -90,6 +90,10 @@
                 (sum, task) => sum + this.getTaskDuration(task),
                 0
             );
+        },
+
+        absoluteTotalDuration: function() {
+            return Math.abs(this.totalDuration);
         }
     };
 
@@ -242,7 +246,7 @@
                 showHours
             });
 
-            if (!showZero && /^0[dhms]$/.test(format)) {
+            if (!showZero && /^-?0[dhms]$/.test(format)) {
                 return null;
             } else {
                 return format;
@@ -697,7 +701,7 @@
 
             const end = ts.end || this.now;
 
-            return (end - ts.begin) / 1000;
+            return Math.round((end - ts.begin) / 1000);
         },
 
         getTaskDuration: function(task) {
@@ -727,7 +731,10 @@
             } else {
                 const duration = utils.formatDuration(
                     this.activeTask.duration,
-                    { showZero: false, showSeconds: false }
+                    {
+                        showZero: false,
+                        showSeconds: Math.abs(this.activeTask.duration) < 60
+                    }
                 );
 
                 if (duration != null) {
