@@ -511,9 +511,14 @@
                 }
 
                 const timeslots = this.timeslotsByTask[id] || [];
-                const lastSlot = timeslots[timeslots.length - 1];
-                if (lastSlot != null && lastSlot.end == null) {
-                    Vue.set(lastSlot, "end", Date.now());
+                const activeSlots = timeslots.filter(
+                    slot => slot.begin != null && slot.end == null
+                );
+
+                const now = Date.now();
+
+                for (const activeSlot of activeSlots) {
+                    Vue.set(activeSlot, "end", now);
                 }
 
                 return task;
