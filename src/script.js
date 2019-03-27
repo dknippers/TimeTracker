@@ -95,50 +95,43 @@
 
     var utils = (function() {
         /**
-         * Converts the given amount of seconds to the XhYmZs format.
-         * For example, input 3750 would yield 1h2m30s
+         * Converts the given amount of total seconds to a display format (e.g. 2d5h6m1s)
+         * For example, input 100950 would yield 1d4h2m30s
          * @param {number} totalSeconds The seconds to convert to XhYmZs format
-         * @param {{showHours: boolean, showMinutes: boolean, showSeconds: boolean}} parts Specify which parts to show in the output
+         * @param {{showDays: boolean, showHours: boolean, showMinutes: boolean, showSeconds: boolean}} parts Specify which parts to show in the output
          */
-        function secondsToHms(
+        function secondsToDisplayDuration(
             totalSeconds,
             {
+                showDays = true,
                 showHours = true,
                 showMinutes = true,
-                showSeconds = true,
-                round = false
+                showSeconds = true
             } = {}
         ) {
             const isNegative = totalSeconds < 0;
+
             let seconds = Math.abs(totalSeconds);
 
-            const hours = Math.floor(seconds / 3600);
-            seconds %= 3600;
+            const components = [
+                { label: "d", sec: 24 * 60 * 60, show: showDays },
+                { label: "h", sec: 60 * 60, show: showHours },
+                { label: "m", sec: 60, show: showMinutes },
+                { label: "s", sec: 1, show: showSeconds }
+            ].filter(v => v.show);
 
-            const minutes = Math.floor(seconds / 60);
-            seconds %= 60;
+            let output = "";
+            const last = components[components.length - 1];
+            for (const component of components) {
+                const value = Math.floor(seconds / component.sec);
+                seconds %= component.sec;
 
-            const mappings = [];
-
-            if (showHours) mappings.push([hours, "h"]);
-            if (showMinutes) mappings.push([minutes, "m"]);
-            if (showSeconds || (hours === 0 && minutes === 0))
-                mappings.push([seconds, "s"]);
-
-            let hms = "";
-            let empty = true;
-            for (let i = 0; i < mappings.length; i++) {
-                const pair = mappings[i];
-                const value = pair[0];
-                const label = pair[1];
-
-                if (value > 0 || (empty && i === mappings.length - 1)) {
-                    hms += value + label;
-                    empty = false;
+                if (value > 0 || (!output && component === last)) {
+                    output += value + component.label;
                 }
             }
 
-            return (isNegative ? "-" : "") + hms;
+            return (isNegative ? "-" : "") + output;
         }
 
         function saveToStorage(key, value) {
@@ -237,24 +230,26 @@
                 showZero = true,
                 showSeconds = true,
                 showMinutes = true,
-                showHours = true
+                showHours = true,
+                showDays = true
             } = {}
         ) {
             const rounded = Math.round(duration);
-            const format = utils.secondsToHms(rounded, {
+            const format = utils.secondsToDisplayDuration(rounded, {
+                showDays,
                 showSeconds,
                 showMinutes,
                 showHours
             });
 
-            if (!showZero && /^0[hms]$/.test(format)) {
+            if (!showZero && /^0[dhms]$/.test(format)) {
                 return null;
             } else {
                 return format;
             }
         }
 
-        function formatTimestamp(timestamp) {
+        function formatTimestamp(timestamp, outputIfInvalid) {
             if (typeof timestamp !== "number") {
                 if (timestamp != null) {
                     // User did pass in something so warn about wrong input here.
@@ -263,7 +258,7 @@
                     );
                 }
 
-                return null;
+                return outputIfInvalid;
             }
 
             const date = new Date(timestamp);
@@ -283,7 +278,7 @@
         }
 
         return {
-            secondsToHms,
+            secondsToDisplayDuration,
             saveToStorage,
             getFromStorage,
             timeToTimestamp,
@@ -621,8 +616,8 @@
             const taskName = (task && task.name) || "<no task>";
 
             const computed = this.getComputedTimeslot(timeslot);
-            const begin = utils.formatTimestamp(computed.begin);
-            const end = utils.formatTimestamp(computed.end);
+            const begin = utils.formatTimestamp(computed.begin, "???");
+            const end = utils.formatTimestamp(computed.end, "???");
 
             this.showConfirmation(
                 `Remove ${begin} - ${end} of ${taskName}?`,

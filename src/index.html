@@ -147,7 +147,7 @@
                                 <span class="timeslot-begin">
                                     <span
                                         v-if="!editBegin[timeslot.id]"
-                                        v-text="formatTimestamp(timeslot.begin)"
+                                        v-text="formatTimestamp(timeslot.begin, '???')"
                                         @click="doEditBegin(timeslot.id)">
                                     </span>
 
@@ -163,7 +163,7 @@
                                 <span class="timeslot-end">
                                     <span
                                         v-if="!editEnd[timeslot.id]"
-                                        v-text="formatTimestamp(timeslot.end)"
+                                        v-text="formatTimestamp(timeslot.end, '???')"
                                         @click="doEditEnd(timeslot.id)"
                                     ></span>
                                     <input type="text" class="edit-time"
