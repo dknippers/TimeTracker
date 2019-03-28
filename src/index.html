@@ -102,20 +102,26 @@
             >
                 <div class="task-head">
                     <div class="left">
-                        <button type="button" v-if="!task.isActive" @click="$emit('start-task', task.id)">
+                        <button type="button" title="Start"
+                            v-if="!task.isActive" @click="$emit('start-task', task.id)">
                             <i class="fas fa-play"></i>
                         </button>
-                        <button type="button" v-if="task.isActive" @click="$emit('stop-task', task.id)">
+                        <button type="button" title="Stop"
+                            v-if="task.isActive" @click="$emit('stop-task', task.id)">
                             <i class="fas fa-pause"></i>
                         </button>
-                        <button type="button" @click="$emit('add-task', { parentId: task.id })" class="add-subtask">
+                        <button type="button" class="add-subtask" title="Add subtask"
+                            @click="$emit('add-task', { parentId: task.id })" >
                             <i class="far fa-clone"></i>
                         </button>
-                        <button type="button" class="toggle-collapse" @click="collapsed = !collapsed">
+                        <button type="button" class="toggle-collapse"
+                            :title="collapsed ? 'Expand' : 'Collapse'"
+                            @click="collapsed = !collapsed">
                             <i v-if="collapsed" class="fas fa-caret-down"></i>
                             <i v-if="!collapsed" class="fas fa-caret-up"></i>
                         </button>
-                        <button type="button" @click="$emit('remove-task', task.id)">
+                        <button type="button" title="Remove"
+                            @click="$emit('remove-task', task.id)">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -136,15 +142,20 @@
                         <div v-for="timeslot in task.timeslots" :key="timeslot.id"
                             class="timeslot" :class="{ active: timeslot.isActive }">
                             <span class="timeslot-controls">
-                                <span class="timeslot-control" @click="$emit('timeslot-to-new-task', timeslot.id)">
+                                <span class="timeslot-control"
+                                    title="Move to new subtask"
+                                    @click="$emit('timeslot-to-new-task', timeslot.id)">
                                     <i class="far fa-window-maximize"></i>
                                 </span>
                                 <span class="timeslot-control timeslot-to-task"
                                     v-if="task.parentId"
+                                    title="Move to parent task"
                                     @click="$emit('timeslot-to-task', { id: timeslot.id, taskId: task.parentId })">
                                     <i class="fas fa-sign-out-alt"></i>
                                 </span>
-                                <span class="timeslot-control timeslot-remove" @click="$emit('remove-timeslot', timeslot.id)">
+                                <span class="timeslot-control timeslot-remove"
+                                    title="Remove"
+                                    @click="$emit('remove-timeslot', timeslot.id)">
                                     <i class="fas fa-trash-alt"></i>
                                 </span>
                             </span>
