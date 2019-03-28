@@ -184,18 +184,32 @@ body {
                     box-shadow: none;
                     color: @light;
 
-                    &.add-subtask > i {
-                        font-size: 1.2em;
-                        transform: rotate(90deg);
+                    > svg {
+                        width: 1.2em;
+                        height: 1.2em;
+                        vertical-align: text-bottom;
+
+                        * {
+                            stroke: @light !important;
+                        }
                     }
 
-                    &.toggle-collapse > i {
-                        font-size: 1.2em;
+                    &.toggle-collapse,
+                    &.add-subtask {
+                        > i {
+                            font-size: 1.2em;
+                        }
                     }
 
                     &:hover {
                         background-color: white;
                         color: @purple;
+
+                        > svg {
+                            * {
+                                stroke: @purple !important;
+                            }
+                        }
                     }
                 }
 
@@ -257,9 +271,17 @@ body {
             > .left > button {
                 color: @dark;
 
+                > svg * {
+                    stroke: @dark !important;
+                }
+
                 &:hover {
                     background-color: white;
                     color: @purple;
+
+                    > svg * {
+                        stroke: @purple !important;
+                    }
                 }
             }
         }
@@ -272,8 +294,16 @@ body {
                 > .left > button {
                     color: white;
 
+                    > svg * {
+                        stroke: @light !important;
+                    }
+
                     &:hover {
                         color: @purple;
+
+                        > svg * {
+                            stroke: @purple !important;
+                        }
                     }
                 }
             }
