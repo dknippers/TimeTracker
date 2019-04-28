@@ -196,8 +196,10 @@
          * @param {string} time Time string to convert to a timestamp.
          */
         function timeToTimestamp(time) {
-            const timeRe = /^[012]?[0-9]:[0-5][0-9]$/;
-            if (!timeRe.test(time)) {
+            const timeRe = /^([012]?[0-9]):?([0-5][0-9])$/;
+            const matches = timeRe.exec(time);
+
+            if (matches == null || matches.length !== 3) {
                 if (time) {
                     console.warn(
                         `Invalid time string, should match RegExp ${timeRe} but got "${time}"`
@@ -207,9 +209,8 @@
                 return null;
             }
 
-            var hrMin = time.split(":").map(v => parseInt(v));
-            const hr = hrMin[0];
-            const min = hrMin[1];
+            const hr = parseInt(matches[1], 10);
+            const min = parseInt(matches[2], 10);
 
             const dt = new Date();
             dt.setHours(hr);
