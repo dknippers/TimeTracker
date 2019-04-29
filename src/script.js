@@ -766,8 +766,14 @@
         }
     };
 
+    Vue.directive("focus", {
+        inserted: function(el) {
+            el.focus();
+        }
+    });
+
     Vue.component("task", {
-        props: ["task", "parentId"],
+        props: ["task"],
         template: "#task",
 
         mounted: function() {
@@ -799,45 +805,13 @@
                 dropzone: false,
                 dragging: false,
                 editName: false,
-                collapsed: false,
-
-                // Timeslot id -> true/false
-                editBegin: {},
-                editEnd: {}
+                collapsed: false
             };
-        },
-
-        directives: {
-            focus: {
-                inserted: function(el) {
-                    el.focus();
-                }
-            }
         },
 
         methods: {
             formatTimestamp: utils.formatTimestamp,
             formatDuration: utils.formatDuration,
-
-            doEditBegin: function(timeslotId) {
-                Vue.set(this.editBegin, timeslotId, true);
-            },
-
-            doEditEnd: function(timeslotId) {
-                Vue.set(this.editEnd, timeslotId, true);
-            },
-
-            changeTimeslotBegin: function(timeslotId, time) {
-                const timestamp = utils.timeToTimestamp(time);
-                this.$emit("change-timeslot-begin", { timeslotId, timestamp });
-                Vue.delete(this.editBegin, timeslotId);
-            },
-
-            changeTimeslotEnd: function(timeslotId, time) {
-                const timestamp = utils.timeToTimestamp(time);
-                this.$emit("change-timeslot-end", { timeslotId, timestamp });
-                Vue.delete(this.editEnd, timeslotId);
-            },
 
             onDragStart: function(ev) {
                 ev.stopPropagation();
@@ -895,15 +869,66 @@
                     if (this.task.name) {
                         this.editName = false;
                     }
-
-                    this.editBegin = {};
-                    this.editEnd = {};
                 }
             },
 
             toggleEdit: function() {
                 if (this.task.name) {
                     this.editName = !this.editName;
+                }
+            }
+        }
+    });
+
+    Vue.component("timeslot", {
+        props: ["timeslot", "task"],
+        template: "#timeslot",
+
+        mounted: function() {
+            document.addEventListener("click", this.onClick);
+        },
+
+        beforeDestroy: function() {
+            document.removeEventListener("click", this.onClick);
+        },
+
+        data: function() {
+            return {
+                // when editing begin or end,
+                // the models for the inputs will be begin/end.
+                begin: null,
+                end: null
+            };
+        },
+
+        methods: {
+            formatTimestamp: utils.formatTimestamp,
+            formatDuration: utils.formatDuration,
+
+            changeTimeslotBegin: function(time) {
+                const timeslotId = this.timeslot.id;
+                const timestamp = utils.timeToTimestamp(time);
+                this.$emit("change-timeslot-begin", { timeslotId, timestamp });
+                this.begin = null;
+            },
+
+            changeTimeslotEnd: function(time) {
+                const timeslotId = this.timeslot.id;
+                const timestamp = utils.timeToTimestamp(time);
+                this.$emit("change-timeslot-end", { timeslotId, timestamp });
+                this.end = null;
+            },
+
+            onClick: function(ev) {
+                if (ev.target == null || ev.target.parentNode == null) {
+                    // Ignore
+                    return;
+                }
+
+                const timeslot = ev.target.closest(".timeslot");
+                if (timeslot !== this.$el) {
+                    this.begin = null;
+                    this.end = null;
                 }
             }
         }

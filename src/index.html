@@ -61,7 +61,7 @@
                 <task
                     v-for="task in rootTasks"
                     :key="task.id"
-                    v-bind="{ task }"
+                    :task="task"
                     @add-task="addTask($event)"
                     @remove-task="askToRemoveTask($event)"
                     @reset-task="resetTask($event)"
@@ -140,69 +140,24 @@
 
                 <div class="task-body" v-if="task.timeslots.length || task.subTasks.length">
                     <div class="timeslots" v-if="task.timeslots.length">
-                        <div v-for="timeslot in task.timeslots" :key="timeslot.id"
-                            class="timeslot" :class="{ active: timeslot.isActive }">
-                            <span class="timeslot-controls">
-                                <span class="timeslot-control"
-                                    title="Move to new subtask"
-                                    @click="$emit('timeslot-to-new-task', timeslot.id)">
-                                    <i class="far fa-window-maximize"></i>
-                                </span>
-                                <span class="timeslot-control timeslot-to-task"
-                                    v-if="task.parentId"
-                                    title="Move to parent task"
-                                    @click="$emit('timeslot-to-task', { id: timeslot.id, taskId: task.parentId })">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                </span>
-                                <span class="timeslot-control timeslot-remove"
-                                    title="Remove"
-                                    @click="$emit('remove-timeslot', timeslot.id)">
-                                    <i class="fas fa-trash-alt"></i>
-                                </span>
-                            </span>
-
-                            <span class="timeslot-period">
-                                <span class="timeslot-begin">
-                                    <span
-                                        v-if="!editBegin[timeslot.id]"
-                                        v-text="formatTimestamp(timeslot.begin, '???')"
-                                        @click="doEditBegin(timeslot.id)">
-                                    </span>
-
-                                    <input class="edit-time" type="text"
-                                        v-if="editBegin[timeslot.id]"
-                                            :value="formatTimestamp(timeslot.begin)" v-once v-focus
-                                            @keyup.enter="changeTimeslotBegin(timeslot.id, $event.target.value)"
-                                        />
-                                </span>
-
-                                <span class="timeslot-separator">&ndash;</span>
-
-                                <span class="timeslot-end">
-                                    <span
-                                        v-if="!editEnd[timeslot.id]"
-                                        v-text="formatTimestamp(timeslot.end, '???')"
-                                        @click="doEditEnd(timeslot.id)"
-                                    ></span>
-                                    <input type="text" class="edit-time"
-                                        v-if="editEnd[timeslot.id]"
-                                        :value="formatTimestamp(timeslot.end)" v-once v-focus
-                                        @keyup.enter="changeTimeslotEnd(timeslot.id, $event.target.value)"
-                                    />
-                                </span>
-                            </span>
-
-                            <span class="timeslot-right">
-                                <span class="timeslot-duration" v-text="formatDuration(timeslot.duration, { showZero: false })"></span>
-                            </span>
-                        </div>
+                        <timeslot
+                            v-for="timeslot in task.timeslots"
+                            :key="timeslot.id"
+                            :timeslot="timeslot"
+                            :task="task"
+                            @change-timeslot-begin="$emit('change-timeslot-begin', $event)"
+                            @change-timeslot-end="$emit('change-timeslot-end', $event)"
+                            @remove-timeslot="$emit('remove-timeslot', $event)"
+                            @timeslot-to-new-task="$emit('timeslot-to-new-task', $event)"
+                            @timeslot-to-task="$emit('timeslot-to-task', $event)"
+                        />
                     </div>
 
                     <div class="subtasks" v-if="task.subTasks.length">
                         <task
                             v-for="subTask in task.subTasks"
                             :key="subTask.id"
-                            v-bind="{ task:subTask }"
+                            :task="subTask"
                             @add-task="$emit('add-task', $event)"
                             @remove-task="$emit('remove-task', $event)"
                             @reset-task="$emit('reset-task', $event)"
@@ -217,6 +172,62 @@
                         />
                     </div>
                 </div>
+            </div>
+        </script>
+
+        <script type="x-template" id="timeslot">
+            <div class="timeslot" :class="{ active: timeslot.isActive }">
+                <span class="timeslot-controls">
+                    <span class="timeslot-control"
+                        title="Move to new subtask"
+                        @click="$emit('timeslot-to-new-task', timeslot.id)">
+                        <i class="far fa-window-maximize"></i>
+                    </span>
+                    <span class="timeslot-control timeslot-to-task"
+                        v-if="task.parentId"
+                        title="Move to parent task"
+                        @click="$emit('timeslot-to-task', { id: timeslot.id, taskId: task.parentId })">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </span>
+                    <span class="timeslot-control timeslot-remove"
+                        title="Remove"
+                        @click="$emit('remove-timeslot', timeslot.id)">
+                        <i class="fas fa-trash-alt"></i>
+                    </span>
+                </span>
+
+                <span class="timeslot-period">
+                    <span class="timeslot-begin">
+                        <span
+                            v-if="begin == null"
+                            v-text="formatTimestamp(timeslot.begin, '???')"
+                            @click="begin = formatTimestamp(timeslot.begin, '???')">
+                        </span>
+
+                        <input class="edit-time" type="text" v-if="begin != null"
+                               v-model="begin" v-focus
+                               @keyup.enter="changeTimeslotBegin(begin)"
+                        />
+                    </span>
+
+                    <span class="timeslot-separator">&ndash;</span>
+
+                    <span class="timeslot-end">
+                        <span
+                            v-if="end == null"
+                            v-text="formatTimestamp(timeslot.end, '???')"
+                            @click="end = formatTimestamp(timeslot.end, '???')"
+                        ></span>
+                        <input type="text" class="edit-time" v-if="end != null"
+                            v-model="end" v-focus
+                            @keyup.enter="changeTimeslotEnd(end)"
+                        />
+                    </span>
+                </span>
+
+                <span class="timeslot-right">
+                    <span class="timeslot-duration" v-text="formatDuration(timeslot.duration, { showZero: false })"></span>
+                </span>
             </div>
         </script>
 
