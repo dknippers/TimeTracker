@@ -1,4 +1,4 @@
-(function() {
+(function () {
     const initialId = 1;
 
     var state = {
@@ -21,15 +21,15 @@
     };
 
     var computed = {
-        taskList: function() {
+        taskList: function () {
             return utils.keyedObjectToArray(this.tasksById, t => t.id);
         },
 
-        timeslots: function() {
+        timeslots: function () {
             return utils.keyedObjectToArray(this.timeslotsById, ts => ts.begin);
         },
 
-        timeslotsByTask: function() {
+        timeslotsByTask: function () {
             const timeslotsByTask = {};
 
             for (const timeslot of this.timeslots) {
@@ -45,15 +45,15 @@
             return timeslotsByTask;
         },
 
-        tasks: function() {
+        tasks: function () {
             return this.taskList.map(this.getComputedTask);
         },
 
-        rootTasks: function() {
+        rootTasks: function () {
             return this.tasks.filter(task => task.parentId == null);
         },
 
-        subTasks: function() {
+        subTasks: function () {
             const subTasks = {};
 
             for (const task of this.taskList) {
@@ -69,11 +69,11 @@
             return subTasks;
         },
 
-        activeTask: function() {
+        activeTask: function () {
             return this.tasks.find(task => task.isActive);
         },
 
-        ancestors: function() {
+        ancestors: function () {
             const ancestors = {};
 
             const cache = {};
@@ -85,19 +85,19 @@
             return ancestors;
         },
 
-        totalDuration: function() {
+        totalDuration: function () {
             return this.rootTasks.reduce(
                 (sum, task) => sum + this.getTaskDuration(task),
                 0
             );
         },
 
-        absoluteTotalDuration: function() {
+        absoluteTotalDuration: function () {
             return Math.abs(this.totalDuration);
         }
     };
 
-    var utils = (function() {
+    var utils = (function () {
         /**
          * Converts the given amount of total seconds to a display format (e.g. 2d5h6m1s)
          * For example, input 100950 would yield 1d4h2m30s
@@ -298,7 +298,7 @@
     })();
 
     var methods = {
-        getComputedTask: function(task) {
+        getComputedTask: function (task) {
             const timeslots = this.timeslotsByTask[task.id] || [];
 
             return Object.assign({}, task, {
@@ -314,7 +314,7 @@
             });
         },
 
-        getSubTasks: function(parentTask) {
+        getSubTasks: function (parentTask) {
             const subTasks = [];
 
             for (const task of this.taskList) {
@@ -326,7 +326,7 @@
             return subTasks;
         },
 
-        getComputedTimeslot: function(timeslot) {
+        getComputedTimeslot: function (timeslot) {
             return Object.assign({}, timeslot, {
                 isActive: timeslot.begin != null && timeslot.end == null,
                 end: timeslot.end || this.now,
@@ -337,7 +337,7 @@
             });
         },
 
-        getAncestors: function(task, cache) {
+        getAncestors: function (task, cache) {
             const parent = this.tasksById[task.parentId];
             if (parent == null) {
                 return [];
@@ -357,11 +357,11 @@
         /**
          * @returns {boolean} true if taskA is an ancestor of taskB
          */
-        isAncestor: function(taskA, taskB) {
+        isAncestor: function (taskA, taskB) {
             return this.ancestors[taskB.id].indexOf(taskA) > -1;
         },
 
-        save: function() {
+        save: function () {
             var toSave = {};
             for (var key in state) {
                 if (
@@ -380,12 +380,12 @@
             utils.saveToStorage("time-tracker", toSave);
         },
 
-        inputTask: function(inputElement) {
+        inputTask: function (inputElement) {
             this.addTask({ name: inputElement.value });
             inputElement.value = "";
         },
 
-        addTask: function(opts) {
+        addTask: function (opts) {
             const name = opts.name;
             const parentId = opts.parentId;
 
@@ -398,7 +398,7 @@
             );
         },
 
-        createTask: function(name, parentId) {
+        createTask: function (name, parentId) {
             const id = this.nextId++;
 
             const task = {
@@ -412,7 +412,7 @@
             return task;
         },
 
-        moveTask: function(opts) {
+        moveTask: function (opts) {
             var taskId = opts.taskId;
             var parentId = opts.parentId;
 
@@ -441,15 +441,15 @@
             }
         },
 
-        changeTimeslotBegin: function(args) {
+        changeTimeslotBegin: function (args) {
             this.changeTimeslotTimestamp(args, "begin");
         },
 
-        changeTimeslotEnd: function(args) {
+        changeTimeslotEnd: function (args) {
             this.changeTimeslotTimestamp(args, "end");
         },
 
-        changeTimeslotTimestamp: function(args, property) {
+        changeTimeslotTimestamp: function (args, property) {
             const timeslotId = args.timeslotId;
             const timestamp = args.timestamp;
 
@@ -459,7 +459,7 @@
             });
         },
 
-        onDrop: function(ev) {
+        onDrop: function (ev) {
             const taskId = ev.dataTransfer.getData("taskId");
             if (!taskId) {
                 return;
@@ -471,11 +471,11 @@
             });
         },
 
-        onDragOver: function(ev) {
+        onDragOver: function (ev) {
             ev.preventDefault();
         },
 
-        updateTask: function(id, updateFn, doneFn) {
+        updateTask: function (id, updateFn, doneFn) {
             const currentTask = this.tasksById[id];
             updateFn(currentTask);
             if (typeof doneFn === "function") {
@@ -483,7 +483,7 @@
             }
         },
 
-        updateTimeslot: function(id, updateFn, doneFn) {
+        updateTimeslot: function (id, updateFn, doneFn) {
             const currentTimeslot = this.timeslotsById[id];
             if (currentTimeslot == null) {
                 console.warn(`No timeslot found with id ${id}`);
@@ -497,7 +497,7 @@
             }
         },
 
-        startTask: function(id) {
+        startTask: function (id) {
             const oldTask = this.activeTask;
             if (oldTask && oldTask.id !== id) {
                 this.stopTask(oldTask.id);
@@ -509,7 +509,7 @@
             });
         },
 
-        stopTask: function(id) {
+        stopTask: function (id) {
             this.updateTask(id, task => {
                 if (task == null) {
                     return;
@@ -530,7 +530,7 @@
             });
         },
 
-        removeTask: function(id) {
+        removeTask: function (id) {
             Vue.delete(this.tasksById, id);
 
             const subTasks = this.subTasks[id];
@@ -552,7 +552,7 @@
             }
         },
 
-        askToRemoveTask: function(id) {
+        askToRemoveTask: function (id) {
             const task = this.tasksById[id];
             if (task == null) {
                 return;
@@ -567,7 +567,7 @@
             );
         },
 
-        showConfirmation: function(
+        showConfirmation: function (
             text,
             ok,
             always,
@@ -589,14 +589,14 @@
             }
         },
 
-        clearConfirmation: function() {
+        clearConfirmation: function () {
             state.ui.confirm.ok = null;
             state.ui.confirm.cancel = null;
             state.ui.confirm.always = null;
             state.ui.confirm.text = null;
         },
 
-        createTimeslot: function(taskId) {
+        createTimeslot: function (taskId) {
             const id = this.nextId++;
 
             this.setNow();
@@ -612,11 +612,11 @@
             return timeslot;
         },
 
-        removeTimeslot: function(id) {
+        removeTimeslot: function (id) {
             Vue.delete(this.timeslotsById, id);
         },
 
-        askToRemoveTimeslot: function(id) {
+        askToRemoveTimeslot: function (id) {
             const timeslot = this.timeslotsById[id];
             if (timeslot == null) {
                 return;
@@ -636,7 +636,7 @@
             );
         },
 
-        timeslotToNewTask: function(id) {
+        timeslotToNewTask: function (id) {
             const timeslot = this.timeslotsById[id];
 
             if (timeslot == null) {
@@ -647,7 +647,7 @@
             this.timeslotToTask({ id, taskId: newTask.id });
         },
 
-        timeslotToTask: function(opts) {
+        timeslotToTask: function (opts) {
             const id = opts.id;
             const taskId = opts.taskId;
 
@@ -661,7 +661,7 @@
             });
         },
 
-        clearAll: function() {
+        clearAll: function () {
             const remove = () => {
                 this.nextId = initialId;
                 for (var taskId in this.tasksById) {
@@ -679,14 +679,14 @@
             );
         },
 
-        resetTask: function(id) {
+        resetTask: function (id) {
             this.updateTask(id, task => {
                 this.clearTimeslots(id);
                 return task;
             });
         },
 
-        clearTimeslots: function(taskId) {
+        clearTimeslots: function (taskId) {
             const timeslots = this.timeslotsByTask[taskId];
             if (Array.isArray(timeslots)) {
                 for (const timeslot of timeslots) {
@@ -695,7 +695,7 @@
             }
         },
 
-        getTimeslotDuration: function(ts) {
+        getTimeslotDuration: function (ts) {
             if (ts == null || ts.begin == null) {
                 return 0;
             }
@@ -705,7 +705,7 @@
             return Math.round((end - ts.begin) / 1000);
         },
 
-        getTaskDuration: function(task) {
+        getTaskDuration: function (task) {
             const timeslots = this.timeslotsByTask[task.id] || [];
             const taskSeconds = timeslots.reduce(
                 (sum, ts) => sum + this.getTimeslotDuration(ts),
@@ -724,7 +724,7 @@
             return taskSeconds + subTasksSeconds;
         },
 
-        updateDocumentTitle: function() {
+        updateDocumentTitle: function () {
             if (this.activeTask == null || this.activeTask.duration == null) {
                 if (document.title !== this.documentTitle) {
                     document.title = this.documentTitle;
@@ -747,17 +747,17 @@
 
         formatDuration: utils.formatDuration,
 
-        setNow: function() {
+        setNow: function () {
             this.now = Date.now();
         },
 
-        skipSave: function(fn) {
+        skipSave: function (fn) {
             this.dontSave = 1;
             fn();
             Vue.nextTick(() => delete this.dontSave);
         },
 
-        mainLoop: function(timeout) {
+        mainLoop: function (timeout) {
             this.skipSave(this.setNow);
 
             this.updateDocumentTitle();
@@ -767,7 +767,7 @@
     };
 
     Vue.directive("focus", {
-        inserted: function(el) {
+        inserted: function (el) {
             el.focus();
         }
     });
@@ -776,12 +776,14 @@
         props: ["task"],
         template: "#task",
 
-        mounted: function() {
-            this.$el.addEventListener("dragstart", this.onDragStart);
-            this.$el.addEventListener("dragend", this.onDragEnd);
-            this.$el.addEventListener("dragover", this.onDragOver);
-            this.$el.addEventListener("dragleave", this.onDragLeave);
-            this.$el.addEventListener("drop", this.onDrop);
+        mounted: function () {
+            const el = this.$el;
+
+            el.addEventListener("dragstart", this.onDragStart);
+            el.addEventListener("dragend", this.onDragEnd);
+            el.addEventListener("dragover", this.onDragOver);
+            el.addEventListener("dragleave", this.onDragLeave);
+            el.addEventListener("drop", this.onDrop);
 
             document.addEventListener("click", this.onClick);
 
@@ -790,7 +792,7 @@
             }
         },
 
-        beforeDestroy: function() {
+        beforeDestroy: function () {
             this.$el.removeEventListener("dragstart", this.onDragStart);
             this.$el.removeEventListener("dragend", this.onDragEnd);
             this.$el.removeEventListener("dragover", this.onDragOver);
@@ -800,7 +802,7 @@
             document.removeEventListener("click", this.onClick);
         },
 
-        data: function() {
+        data: function () {
             return {
                 dropzone: false,
                 dragging: false,
@@ -813,52 +815,72 @@
             formatTimestamp: utils.formatTimestamp,
             formatDuration: utils.formatDuration,
 
-            onDragStart: function(ev) {
+            onDragStart: function (ev) {
                 ev.stopPropagation();
 
+                ev.dataTransfer.effectAllowed = "move";
                 ev.dataTransfer.dropEffect = "move";
                 ev.dataTransfer.setData("taskId", this.task.id);
-                ev.dataTransfer.setData("parentId", this.task.parentId);
                 this.dragging = true;
             },
 
-            onDragEnd: function(ev) {
+            onDragEnd: function (ev) {
                 ev.preventDefault();
                 this.dragging = false;
+                this.$el.setAttribute("draggable", "false");
             },
 
-            onDragOver: function(ev) {
+            onDragOver: function (ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
 
                 this.dropzone = true;
             },
 
-            onDragLeave: function(ev) {
+            onDragLeave: function (ev) {
                 ev.preventDefault();
                 this.dropzone = false;
             },
 
-            onDrop: function(ev) {
+            onDrop: function (ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
 
                 this.dropzone = false;
 
-                const droppedTaskId = parseInt(
-                    ev.dataTransfer.getData("taskId"),
+                const taskId = parseInt(ev.dataTransfer.getData("taskId"), 10);
+                const timeslotId = parseInt(
+                    ev.dataTransfer.getData("timeslotId"),
                     10
                 );
 
-                if (!isNaN(droppedTaskId)) {
-                    this.$emit("move-task", {
-                        taskId: droppedTaskId,
-                        parentId: this.task.id
-                    });
+                if (isNaN(taskId)) {
+                    // Nothing to do
+                    return;
+                }
+
+                if (!isNaN(timeslotId)) {
+                    this.onDropTimeslot(timeslotId);
+                } else {
+                    this.onDropTask(taskId);
                 }
             },
 
-            onClick: function(ev) {
+            onDropTask: function (taskId) {
+                this.$emit("move-task", {
+                    taskId: taskId,
+                    parentId: this.task.id
+                });
+            },
+
+            onDropTimeslot: function (timeslotId) {
+                this.$emit("timeslot-to-task", {
+                    id: timeslotId,
+                    taskId: this.task.id
+                });
+            },
+
+            onClick: function (ev) {
                 if (ev.target == null || ev.target.parentNode == null) {
                     // Ignore
                     return;
@@ -872,7 +894,7 @@
                 }
             },
 
-            toggleEdit: function() {
+            toggleEdit: function () {
                 if (this.task.name) {
                     this.editName = !this.editName;
                 }
@@ -884,20 +906,25 @@
         props: ["timeslot", "task"],
         template: "#timeslot",
 
-        mounted: function() {
+        mounted: function () {
+            this.$el.addEventListener("dragstart", this.onDragStart);
+            this.$el.addEventListener("dragend", this.onDragEnd);
             document.addEventListener("click", this.onClick);
         },
 
-        beforeDestroy: function() {
+        beforeDestroy: function () {
+            this.$el.removeEventListener("dragstart", this.onDragStart);
+            this.$el.removeEventListener("dragend", this.onDragEnd);
             document.removeEventListener("click", this.onClick);
         },
 
-        data: function() {
+        data: function () {
             return {
                 // when editing begin or end,
                 // the models for the inputs will be begin/end.
                 begin: null,
-                end: null
+                end: null,
+                dragging: false
             };
         },
 
@@ -905,21 +932,37 @@
             formatTimestamp: utils.formatTimestamp,
             formatDuration: utils.formatDuration,
 
-            changeTimeslotBegin: function(time) {
+            changeTimeslotBegin: function (time) {
                 const timeslotId = this.timeslot.id;
                 const timestamp = utils.timeToTimestamp(time);
                 this.$emit("change-timeslot-begin", { timeslotId, timestamp });
                 this.begin = null;
             },
 
-            changeTimeslotEnd: function(time) {
+            changeTimeslotEnd: function (time) {
                 const timeslotId = this.timeslot.id;
                 const timestamp = utils.timeToTimestamp(time);
                 this.$emit("change-timeslot-end", { timeslotId, timestamp });
                 this.end = null;
             },
 
-            onClick: function(ev) {
+            onDragStart: function (ev) {
+                console.log("dragStart");
+                ev.stopPropagation();
+
+                ev.dataTransfer.dropEffect = "move";
+                ev.dataTransfer.setData("timeslotId", this.timeslot.id);
+                ev.dataTransfer.setData("taskId", this.timeslot.taskId);
+                this.dragging = true;
+            },
+
+            onDragEnd: function (ev) {
+                console.log("dragEnd");
+                ev.preventDefault();
+                this.dragging = false;
+            },
+
+            onClick: function (ev) {
                 if (ev.target == null || ev.target.parentNode == null) {
                     // Ignore
                     return;
@@ -938,17 +981,17 @@
         template: "#confirm-dialog",
         props: ["config"],
         methods: {
-            ok: function() {
+            ok: function () {
                 utils.runIfFn(this.config.ok);
                 utils.runIfFn(this.config.always);
             },
 
-            cancel: function() {
+            cancel: function () {
                 utils.runIfFn(this.config.cancel);
                 utils.runIfFn(this.config.always);
             },
 
-            onClick: function(ev) {
+            onClick: function (ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
 
@@ -959,11 +1002,11 @@
             }
         },
 
-        mounted: function() {
+        mounted: function () {
             this.$el.addEventListener("click", this.onClick);
         },
 
-        beforeDestroy: function() {
+        beforeDestroy: function () {
             this.$el.removeEventListener("click", this.onClick);
         }
     });
@@ -974,14 +1017,14 @@
         methods: methods,
         computed: computed,
 
-        beforeCreate: function() {
+        beforeCreate: function () {
             var oldState = utils.getFromStorage("time-tracker");
             if (oldState != null) {
                 Object.assign(state, oldState);
             }
         },
 
-        mounted: function() {
+        mounted: function () {
             this.documentTitle = document.title;
 
             Vue.nextTick(() => this.mainLoop(1000));
@@ -990,12 +1033,12 @@
             this.$el.addEventListener("dragover", this.onDragOver);
         },
 
-        beforeDestroy: function() {
+        beforeDestroy: function () {
             this.$el.removeEventListener("drop", this.onDrop);
             this.$el.removeEventListener("dragover", this.onDragOver);
         },
 
-        updated: function() {
+        updated: function () {
             if (!this.dontSave) {
                 this.save();
             }

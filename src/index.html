@@ -97,10 +97,9 @@
         <script type="x-template" id="task">
             <div
                 class="task"
-                draggable="true"
                 :class="{ active: task.isActive, dropzone: dropzone, dragging: dragging, subtask: task.parentId != null, collapsed: collapsed }"
             >
-                <div class="task-head">
+                <div class="task-head" draggable="true">
                     <div class="left">
                         <button type="button" title="Start"
                             v-if="!task.isActive" @click="$emit('start-task', task.id)">
@@ -134,7 +133,9 @@
                     </div>
 
                     <div class="right">
-                        <div class="task-duration" v-text="formatDuration(task.duration, { showZero: false, showSeconds: task.duration < 60 })"></div>
+                        <div class="task-duration-wrapper">
+                            <div class="task-duration" v-text="formatDuration(task.duration, { showZero: false, showSeconds: task.duration < 60 })"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -176,18 +177,12 @@
         </script>
 
         <script type="x-template" id="timeslot">
-            <div class="timeslot" :class="{ active: timeslot.isActive }">
+            <div class="timeslot" draggable="true" :class="{ active: timeslot.isActive }">
                 <span class="timeslot-controls">
                     <span class="timeslot-control"
                         title="Move to new subtask"
                         @click="$emit('timeslot-to-new-task', timeslot.id)">
                         <i class="far fa-window-maximize"></i>
-                    </span>
-                    <span class="timeslot-control timeslot-to-task"
-                        v-if="task.parentId"
-                        title="Move to parent task"
-                        @click="$emit('timeslot-to-task', { id: timeslot.id, taskId: task.parentId })">
-                        <i class="fas fa-sign-out-alt"></i>
                     </span>
                     <span class="timeslot-control timeslot-remove"
                         title="Remove"

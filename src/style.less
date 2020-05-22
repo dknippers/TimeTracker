@@ -42,6 +42,10 @@ body {
     background-color: white;
     border-radius: 5px;
 
+    *[draggable="true"] {
+        cursor: move;
+    }
+
     &.loaded {
         display: flex;
         justify-content: center;
@@ -163,7 +167,6 @@ body {
             padding: 0;
             background-color: @dark;
             color: white;
-
             display: flex;
             justify-content: center;
             align-items: center;
@@ -183,16 +186,7 @@ body {
                     border: none;
                     box-shadow: none;
                     color: @light;
-
-                    > svg {
-                        width: 1.2em;
-                        height: 1.2em;
-                        vertical-align: text-bottom;
-
-                        * {
-                            stroke: @light !important;
-                        }
-                    }
+                    max-width: 2.5em;
 
                     &.toggle-collapse,
                     &.add-subtask {
@@ -204,12 +198,6 @@ body {
                     &:hover {
                         background-color: white;
                         color: @purple;
-
-                        > svg {
-                            * {
-                                stroke: @purple !important;
-                            }
-                        }
                     }
                 }
 
@@ -254,12 +242,14 @@ body {
             }
 
             > .right {
-                .task-duration {
-                    flex: 1;
-                    font-size: 0.9em;
-                    font-weight: bold;
-                    text-align: right;
-                    padding-right: 1em;
+                .task-duration-wrapper {
+                    padding: 0.5em 1em 0.5em 0;
+                    .task-duration {
+                        flex: 1;
+                        font-size: 0.9em;
+                        font-weight: bold;
+                        text-align: right;
+                    }
                 }
             }
         }
@@ -271,17 +261,9 @@ body {
             > .left > button {
                 color: @dark;
 
-                > svg * {
-                    stroke: @dark !important;
-                }
-
                 &:hover {
                     background-color: white;
                     color: @purple;
-
-                    > svg * {
-                        stroke: @purple !important;
-                    }
                 }
             }
         }
@@ -294,16 +276,8 @@ body {
                 > .left > button {
                     color: white;
 
-                    > svg * {
-                        stroke: @light !important;
-                    }
-
                     &:hover {
                         color: @purple;
-
-                        > svg * {
-                            stroke: @purple !important;
-                        }
                     }
                 }
             }
@@ -331,7 +305,7 @@ body {
                         flex: 1;
 
                         > .timeslot-control {
-                            display: none;
+                            visibility: hidden;
                             color: @dark;
                             padding: 0.35em;
 
@@ -358,12 +332,12 @@ body {
 
                     &:hover {
                         > .timeslot-controls > .timeslot-control {
-                            display: inline;
+                            visibility: visible;
                         }
                     }
 
                     .timeslot-period {
-                        flex: 2;
+                        flex: 1;
                         text-align: center;
                         display: flex;
 
