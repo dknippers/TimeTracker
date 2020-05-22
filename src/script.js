@@ -996,18 +996,26 @@
                 ev.stopPropagation();
 
                 if (ev.target === this.$el) {
-                    utils.runIfFn(this.cancel);
-                    utils.runIfFn(this.always);
+                    this.cancel();
+                }
+            },
+
+            onKeyup: function (ev) {
+                if (ev.keyCode === 27) {
+                    // Cancel on escape
+                    this.cancel();
                 }
             }
         },
 
         mounted: function () {
             this.$el.addEventListener("click", this.onClick);
+            document.addEventListener("keyup", this.onKeyup);
         },
 
         beforeDestroy: function () {
             this.$el.removeEventListener("click", this.onClick);
+            document.removeEventListener("keyup", this.onKeyup);
         }
     });
 

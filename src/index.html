@@ -129,7 +129,8 @@
                     <div class="center">
                         <div v-if="!editName" class="task-name" @click="toggleEdit()" v-text="task.name"></div>
                         <input type="text" class="task-name edit" placeholder="Task name"
-                            v-focus v-if="editName" v-model="task._source.name" @keyup.enter="toggleEdit()" />
+                            v-focus v-if="editName" v-model="task._source.name"
+                            @keyup.enter="toggleEdit()" @keyup.escape="editName = false" />
                     </div>
 
                     <div class="right">
@@ -202,6 +203,7 @@
                         <input class="edit-time" type="text" v-if="begin != null"
                                v-model="begin" v-focus
                                @keyup.enter="changeTimeslotBegin(begin)"
+                               @keyup.escape="begin = null"
                         />
                     </span>
 
@@ -216,6 +218,7 @@
                         <input type="text" class="edit-time" v-if="end != null"
                             v-model="end" v-focus
                             @keyup.enter="changeTimeslotEnd(end)"
+                            @keyup.escape="end = null"
                         />
                     </span>
                 </span>
