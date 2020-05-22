@@ -34,8 +34,8 @@ body {
 }
 
 #time-tracker {
-    padding: 2em;
-    margin: 1em auto 0 auto;
+    padding: 2rem;
+    margin: 1rem auto 0 auto;
     display: none;
     max-width: 600px;
     color: @dark;
@@ -58,7 +58,7 @@ body {
     }
 
     button {
-        font-size: 0.9em;
+        font-size: 1em;
         padding: 0.4em 0.8em;
         background: 0 0;
         border: 1px solid lightgray;
@@ -180,7 +180,7 @@ body {
                 > button {
                     flex: 1;
                     visibility: hidden;
-                    padding: 0.5rem;
+                    padding: 0.5em;
                     border: none;
                     box-shadow: none;
                     color: @light;
@@ -189,7 +189,7 @@ body {
                     &.toggle-collapse,
                     &.add-subtask {
                         > i {
-                            font-size: 1.2em;
+                            font-size: 1em;
                         }
                     }
 
@@ -240,10 +240,13 @@ body {
             }
 
             > .right {
+                display: flex;
+                justify-content: flex-end;
+
                 .task-duration-wrapper {
-                    padding: 0.5em 1em 0.5em 0;
+                    padding: 0.5em 1em;
+
                     .task-duration {
-                        flex: 1;
                         font-size: 0.9em;
                         font-weight: bold;
                         text-align: right;
