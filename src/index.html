@@ -31,7 +31,17 @@
         <div id="time-tracker" :class="{ loaded: 1 }">
             <main>
                 <div class="top-container">
-                    <div class="left"></div>
+                    <div class="left">
+                        <button
+                            v-if="rootTasks.length > 0"
+                            type="button"
+                            @click="clearAll()"
+                            class="remove-all"
+                        >
+                            <i class="far fa-trash-alt"></i>
+                            <span class="text">remove all</span>
+                        </button>
+                    </div>
                     <div class="center">
                         <input
                             class="new-task"
@@ -71,17 +81,6 @@
                     @timeslot-to-task="timeslotToTask($event)"
                 >
                 </task>
-
-                <div v-if="rootTasks.length > 1" class="remove-all-container">
-                    <button
-                        type="button"
-                        @click="clearAll()"
-                        class="remove-all"
-                    >
-                        <i class="fas fa-trash-alt"></i>
-                        <span class="text">remove all</span>
-                    </button>
-                </div>
             </main>
 
             <confirm-dialog
