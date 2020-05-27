@@ -7,6 +7,7 @@
         timeslotsById: {},
 
         now: Date.now(),
+        dropzone: false,
 
         ui: {
             confirm: {
@@ -431,6 +432,8 @@
         },
 
         onDrop: function (ev) {
+            this.dropzone = false;
+
             const taskId = ev.dataTransfer.getData("taskId");
             if (!taskId) {
                 return;
@@ -444,6 +447,19 @@
 
         onDragOver: function (ev) {
             ev.preventDefault();
+
+            const isTimeslot = ev.dataTransfer.types.indexOf("timeslotid") > -1;
+            if (isTimeslot) {
+                ev.dataTransfer.dropEffect = "none";
+            }
+
+            this.dropzone = true;
+        },
+
+        onDragLeave: function (ev) {
+            ev.preventDefault();
+
+            this.dropzone = false;
         },
 
         updateTask: function (id, updateFn, doneFn) {
@@ -772,7 +788,6 @@
             onDragEnd: function (ev) {
                 ev.preventDefault();
                 this.dragging = false;
-                this.$el.setAttribute("draggable", "false");
             },
 
             onDragOver: function (ev) {
@@ -782,8 +797,13 @@
                 this.dropzone = true;
             },
 
+            onDragEnter: function (ev) {
+                ev.preventDefault();
+            },
+
             onDragLeave: function (ev) {
                 ev.preventDefault();
+
                 this.dropzone = false;
             },
 
@@ -889,9 +909,9 @@
             },
 
             onDragStart: function (ev) {
-                console.log("dragStart");
                 ev.stopPropagation();
 
+                ev.dataTransfer.effectAllowed = "move";
                 ev.dataTransfer.dropEffect = "move";
                 ev.dataTransfer.setData("timeslotId", this.timeslot.id);
                 ev.dataTransfer.setData("taskId", this.timeslot.taskId);
@@ -899,7 +919,6 @@
             },
 
             onDragEnd: function (ev) {
-                console.log("dragEnd");
                 ev.preventDefault();
                 this.dragging = false;
             },
@@ -981,11 +1000,13 @@
 
             this.$el.addEventListener("drop", this.onDrop);
             this.$el.addEventListener("dragover", this.onDragOver);
+            this.$el.addEventListener("dragleave", this.onDragLeave);
         },
 
         beforeDestroy: function () {
             this.$el.removeEventListener("drop", this.onDrop);
             this.$el.removeEventListener("dragover", this.onDragOver);
+            this.$el.removeEventListener("dragleave", this.onDragLeave);
         },
 
         updated: function () {
