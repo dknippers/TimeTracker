@@ -15,9 +15,9 @@
                 cancel: null,
                 cancelText: "No",
                 text: null,
-                always: null
-            }
-        }
+                always: null,
+            },
+        },
     };
 
     var computed = {
@@ -86,15 +86,12 @@
         },
 
         totalDuration: function () {
-            return this.rootTasks.reduce(
-                (sum, task) => sum + this.getTaskDuration(task),
-                0
-            );
+            return this.rootTasks.reduce((sum, task) => sum + this.getTaskDuration(task), 0);
         },
 
         absoluteTotalDuration: function () {
             return Math.abs(this.totalDuration);
-        }
+        },
     };
 
     var utils = (function () {
@@ -106,12 +103,7 @@
          */
         function secondsToDisplayDuration(
             totalSeconds,
-            {
-                showDays = true,
-                showHours = true,
-                showMinutes = true,
-                showSeconds = true
-            } = {}
+            { showDays = true, showHours = true, showMinutes = true, showSeconds = true } = {}
         ) {
             const isNegative = totalSeconds < 0;
 
@@ -121,7 +113,7 @@
                 { label: "d", sec: 24 * 60 * 60, show: showDays },
                 { label: "h", sec: 60 * 60, show: showHours },
                 { label: "m", sec: 60, show: showMinutes },
-                { label: "s", sec: 1, show: showSeconds }
+                { label: "s", sec: 1, show: showSeconds },
             ].filter(v => v.show);
 
             let output = "";
@@ -201,9 +193,7 @@
 
             if (matches == null || matches.length !== 3) {
                 if (time) {
-                    console.warn(
-                        `Invalid time string, should match RegExp ${timeRe} but got "${time}"`
-                    );
+                    console.warn(`Invalid time string, should match RegExp ${timeRe} but got "${time}"`);
                 }
 
                 return null;
@@ -231,20 +221,14 @@
 
         function formatDuration(
             duration,
-            {
-                showZero = true,
-                showSeconds = true,
-                showMinutes = true,
-                showHours = true,
-                showDays = true
-            } = {}
+            { showZero = true, showSeconds = true, showMinutes = true, showHours = true, showDays = true } = {}
         ) {
             const rounded = Math.round(duration);
             const format = utils.secondsToDisplayDuration(rounded, {
                 showDays,
                 showSeconds,
                 showMinutes,
-                showHours
+                showHours,
             });
 
             if (!showZero && /^-?0[dhms]$/.test(format)) {
@@ -258,9 +242,7 @@
             if (typeof timestamp !== "number") {
                 if (timestamp != null) {
                     // User did pass in something so warn about wrong input here.
-                    console.warn(
-                        `Timestamp should be a number, but got a ${typeof timestamp}`
-                    );
+                    console.warn(`Timestamp should be a number, but got a ${typeof timestamp}`);
                 }
 
                 return outputIfInvalid;
@@ -293,7 +275,7 @@
             keyedObjectToArray,
             formatDuration,
             formatTimestamp,
-            runIfFn
+            runIfFn,
         };
     })();
 
@@ -305,12 +287,10 @@
                 duration: this.getTaskDuration(task),
                 timeslots: timeslots.map(this.getComputedTimeslot),
                 subTasks: this.getSubTasks(task).map(this.getComputedTask),
-                isActive: timeslots.some(
-                    timeslot => timeslot.begin != null && timeslot.end == null
-                ),
+                isActive: timeslots.some(timeslot => timeslot.begin != null && timeslot.end == null),
 
                 // Reference to source object
-                _source: task
+                _source: task,
             });
         },
 
@@ -333,7 +313,7 @@
                 duration: this.getTimeslotDuration(timeslot),
 
                 // Reference to source object
-                _source: timeslot
+                _source: timeslot,
             });
         },
 
@@ -364,12 +344,7 @@
         save: function () {
             var toSave = {};
             for (var key in state) {
-                if (
-                    key.indexOf("_") === 0 ||
-                    key.indexOf("$") === 0 ||
-                    key === "now" ||
-                    key === "ui"
-                ) {
+                if (key.indexOf("_") === 0 || key.indexOf("$") === 0 || key === "now" || key === "ui") {
                     // Skip internal (_ / $) values and this.now
                     continue;
                 }
@@ -404,7 +379,7 @@
             const task = {
                 id,
                 parentId,
-                name: name
+                name: name,
             };
 
             Vue.set(this.tasksById, id, task);
@@ -420,11 +395,7 @@
                 const task = this.tasksById[taskId];
                 const parent = this.tasksById[parentId];
 
-                if (
-                    task == null ||
-                    parent == null ||
-                    task.parentId === parent.id
-                ) {
+                if (task == null || parent == null || task.parentId === parent.id) {
                     return;
                 }
 
@@ -516,9 +487,7 @@
                 }
 
                 const timeslots = this.timeslotsByTask[id] || [];
-                const activeSlots = timeslots.filter(
-                    slot => slot.begin != null && slot.end == null
-                );
+                const activeSlots = timeslots.filter(slot => slot.begin != null && slot.end == null);
 
                 const now = Date.now();
 
@@ -560,21 +529,10 @@
 
             const taskName = task.name || "<no name>";
 
-            this.showConfirmation(
-                `Delete ${taskName}?`,
-                () => this.removeTask(id),
-                this.clearConfirmation
-            );
+            this.showConfirmation(`Delete ${taskName}?`, () => this.removeTask(id), this.clearConfirmation);
         },
 
-        showConfirmation: function (
-            text,
-            ok,
-            always,
-            cancel,
-            okText,
-            cancelText
-        ) {
+        showConfirmation: function (text, ok, always, cancel, okText, cancelText) {
             Vue.set(state.ui.confirm, "text", text);
             Vue.set(state.ui.confirm, "ok", ok);
             Vue.set(state.ui.confirm, "always", always);
@@ -604,7 +562,7 @@
             const timeslot = {
                 id,
                 taskId,
-                begin: this.now
+                begin: this.now,
             };
 
             Vue.set(this.timeslotsById, id, timeslot);
@@ -672,11 +630,7 @@
                 }
             };
 
-            this.showConfirmation(
-                "Remove all tasks?",
-                remove,
-                this.clearConfirmation
-            );
+            this.showConfirmation("Remove all tasks?", remove, this.clearConfirmation);
         },
 
         resetTask: function (id) {
@@ -707,18 +661,12 @@
 
         getTaskDuration: function (task) {
             const timeslots = this.timeslotsByTask[task.id] || [];
-            const taskSeconds = timeslots.reduce(
-                (sum, ts) => sum + this.getTimeslotDuration(ts),
-                0
-            );
+            const taskSeconds = timeslots.reduce((sum, ts) => sum + this.getTimeslotDuration(ts), 0);
 
             const subTasks = this.subTasks[task.id];
             let subTasksSeconds = 0;
             if (Array.isArray(subTasks)) {
-                subTasksSeconds = subTasks.reduce(
-                    (sum, subTask) => sum + this.getTaskDuration(subTask),
-                    0
-                );
+                subTasksSeconds = subTasks.reduce((sum, subTask) => sum + this.getTaskDuration(subTask), 0);
             }
 
             return taskSeconds + subTasksSeconds;
@@ -730,13 +678,10 @@
                     document.title = this.documentTitle;
                 }
             } else {
-                const duration = utils.formatDuration(
-                    this.activeTask.duration,
-                    {
-                        showZero: false,
-                        showSeconds: Math.abs(this.activeTask.duration) < 60
-                    }
-                );
+                const duration = utils.formatDuration(this.activeTask.duration, {
+                    showZero: false,
+                    showSeconds: Math.abs(this.activeTask.duration) < 60,
+                });
 
                 if (duration != null) {
                     const name = this.activeTask.name || "";
@@ -763,13 +708,13 @@
             this.updateDocumentTitle();
 
             setTimeout(() => this.mainLoop(timeout), timeout);
-        }
+        },
     };
 
     Vue.directive("focus", {
         inserted: function (el) {
             el.focus();
-        }
+        },
     });
 
     Vue.component("task", {
@@ -807,7 +752,7 @@
                 dropzone: false,
                 dragging: false,
                 editName: false,
-                collapsed: false
+                collapsed: false,
             };
         },
 
@@ -849,10 +794,7 @@
                 this.dropzone = false;
 
                 const taskId = parseInt(ev.dataTransfer.getData("taskId"), 10);
-                const timeslotId = parseInt(
-                    ev.dataTransfer.getData("timeslotId"),
-                    10
-                );
+                const timeslotId = parseInt(ev.dataTransfer.getData("timeslotId"), 10);
 
                 if (isNaN(taskId)) {
                     // Nothing to do
@@ -869,14 +811,14 @@
             onDropTask: function (taskId) {
                 this.$emit("move-task", {
                     taskId: taskId,
-                    parentId: this.task.id
+                    parentId: this.task.id,
                 });
             },
 
             onDropTimeslot: function (timeslotId) {
                 this.$emit("timeslot-to-task", {
                     id: timeslotId,
-                    taskId: this.task.id
+                    taskId: this.task.id,
                 });
             },
 
@@ -898,8 +840,8 @@
                 if (this.task.name) {
                     this.editName = !this.editName;
                 }
-            }
-        }
+            },
+        },
     });
 
     Vue.component("timeslot", {
@@ -924,7 +866,7 @@
                 // the models for the inputs will be begin/end.
                 begin: null,
                 end: null,
-                dragging: false
+                dragging: false,
             };
         },
 
@@ -973,8 +915,8 @@
                     this.begin = null;
                     this.end = null;
                 }
-            }
-        }
+            },
+        },
     });
 
     Vue.component("confirm-dialog", {
@@ -1005,7 +947,7 @@
                     // Cancel on escape
                     this.cancel();
                 }
-            }
+            },
         },
 
         mounted: function () {
@@ -1016,7 +958,7 @@
         beforeDestroy: function () {
             this.$el.removeEventListener("click", this.onClick);
             document.removeEventListener("keyup", this.onKeyup);
-        }
+        },
     });
 
     const app = new Vue({
@@ -1050,6 +992,6 @@
             if (!this.dontSave) {
                 this.save();
             }
-        }
+        },
     });
 })();
