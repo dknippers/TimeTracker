@@ -27,6 +27,18 @@ html {
     }
 }
 
+._focus {
+    box-shadow: 1px 1px 3px 0 @purple;
+}
+
+._shadow {
+    box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+}
+
+._active {
+    box-shadow: none;
+}
+
 body {
     padding: 0;
     margin: 0;
@@ -74,6 +86,10 @@ body {
         }
     }
 
+    input {
+        outline: none;
+    }
+
     .top-container {
         position: relative;
         justify-content: center;
@@ -96,14 +112,15 @@ body {
         }
 
         .new-task {
+            &:extend(._shadow);
+
             font-size: 1em;
             padding: 0.8em 1.2em;
-            box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
-            border: 0;
+            border: 1px solid @light;
             width: 100%;
 
             &:focus {
-                outline: 1px auto @purple;
+                &:extend(._focus);
             }
         }
 
@@ -133,12 +150,15 @@ body {
             margin-left: 0.4rem;
             display: none;
         }
-        &:hover {
-            outline: 1px auto @purple;
+        &:hover, &:focus {
+            &:extend(._focus);
 
             .text {
                 display: inline;
             }
+        }
+        &:active {
+            &:extend(._active);
         }
     }
 
@@ -242,7 +262,8 @@ body {
                         font-size: 1em;
 
                         &:focus {
-                            outline: 1px auto @purple;
+                            &:extend(._focus);
+                            border: none;
                         }
                     }
                 }
@@ -445,16 +466,18 @@ body {
 
                 > button {
                     flex: 1;
+
+                    &:focus, &:hover {
+                        &:extend(._focus);
+                    }
+
+                    &:active {
+                        &:extend(._active);
+                    }
                 }
 
                 > .ok {
                     margin-left: 1em;
-
-                    &:hover {
-                        background-color: @red;
-                        color: white;
-                        box-shadow: 1px 1px 1px 0 lightgray;
-                    }
                 }
             }
         }
