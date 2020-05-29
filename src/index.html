@@ -101,7 +101,7 @@
                         <div v-if="!editName" class="task-name" @click="toggleEdit()" v-text="task.name"></div>
                         <input type="text" class="task-name edit" placeholder="Task name"
                             v-focus v-if="editName" v-model="task._source.name"
-                            @keyup.enter="toggleEdit()" @keyup.escape="editName = false" />
+                            @keyup.enter="cancelEdit()" @keyup.escape="cancelEdit()" />
                     </div>
 
                     <div class="right">

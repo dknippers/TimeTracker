@@ -746,11 +746,14 @@
             el.addEventListener("dragleave", this.onDragLeave);
             el.addEventListener("drop", this.onDrop);
 
-            document.addEventListener("click", this.onClick);
-
             if (!this.task.name) {
                 this.editName = true;
             }
+
+            // When a task is created through a click we do not want to
+            // execute the onClick handler for that one.
+            // So add event listener on next loop.
+            setTimeout(() => document.addEventListener("click", this.onClick));
         },
 
         beforeDestroy: function () {
@@ -850,17 +853,17 @@
 
                 const task = ev.target.closest(".task");
                 if (task !== this.$el) {
-                    if (this.task.name) {
-                        this.editName = false;
-                    }
+                    this.cancelEdit();
                 }
             },
 
             toggleEdit: function () {
-                if (this.task.name) {
-                    this.editName = !this.editName;
-                }
+                this.editName = !this.editName;
             },
+
+            cancelEdit: function() {
+                this.editName = false;
+            }
         },
     });
 
