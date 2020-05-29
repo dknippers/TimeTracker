@@ -185,9 +185,7 @@ body {
         }
 
         &.dragging {
-            > .task-body {
-                opacity: 0.25;
-            }
+            border: 2px dashed @purple;
         }
 
         > .task-head {
@@ -331,6 +329,10 @@ body {
                     justify-content: center;
                     align-items: center;
                     padding: 0.25em 0;
+
+                    &.dragging {
+                        border: 2px dashed @purple;
+                    }
 
                     > .timeslot-controls {
                         flex: 1;

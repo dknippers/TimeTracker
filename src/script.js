@@ -808,6 +808,11 @@
                 ev.preventDefault();
                 ev.stopPropagation();
 
+                if(this.dragging) {
+                    // Cannot be their own dropzone
+                    return;
+                }
+
                 this.dropzone = true;
             },
 
