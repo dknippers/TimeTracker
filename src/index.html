@@ -19,7 +19,7 @@
             <main>
                 <div class="top-container">
                     <div class="left">
-                        <button v-if="rootTasks.length > 0" type="button" @click="clearAll()" class="remove-all">
+                        <button v-if="rootTasks.length > 0" type="button" @click="clearAll(event.clientY)" class="remove-all">
                             <i class="far fa-trash-alt"></i>
                             <span class="text">remove all</span>
                         </button>
@@ -92,7 +92,7 @@
                             <i v-if="!collapsed" class="fas fa-caret-up"></i>
                         </button>
                         <button type="button" title="Remove"
-                            @click="$emit('remove-task', task.id)">
+                            @click="$emit('remove-task', { taskId: task.id, posY: event.clientY })">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -149,7 +149,7 @@
         </script>
 
         <script type="x-template" id="timeslot">
-            <div class="timeslot" draggable="true" :class="{ active: timeslot.isActive }">
+            <div class="timeslot" draggable="true" :class="{ active: task.isActive, dragging: dragging }">
                 <span class="timeslot-controls">
                     <span class="timeslot-control"
                         title="Move to new subtask"
@@ -158,7 +158,7 @@
                     </span>
                     <span class="timeslot-control timeslot-remove"
                         title="Remove"
-                        @click="$emit('remove-timeslot', timeslot.id)">
+                        @click="$emit('remove-timeslot', { timeslotId: timeslot.id, posY: event.clientY })">
                         <i class="fas fa-trash-alt"></i>
                     </span>
                 </span>

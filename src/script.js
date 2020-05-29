@@ -12,11 +12,12 @@
         ui: {
             confirm: {
                 ok: null,
-                okText: "Yes",
+                okText: null,
                 cancel: null,
-                cancelText: "No",
+                cancelText: null,
                 text: null,
                 always: null,
+                posY: null,
             },
         },
     };
@@ -537,30 +538,32 @@
             }
         },
 
-        askToRemoveTask: function (id) {
-            const task = this.tasksById[id];
+        askToRemoveTask: function (evt) {
+            const taskId = evt.taskId;
+
+            const task = this.tasksById[taskId];
             if (task == null) {
                 return;
             }
 
             const taskName = task.name || "<no name>";
 
-            this.showConfirmation(`Delete ${taskName}?`, () => this.removeTask(id), this.clearConfirmation);
+            this.showConfirmation({
+                text: `Delete ${taskName}?`,
+                ok: () => this.removeTask(taskId),
+                always: this.clearConfirmation,
+                posY: evt.posY,
+            });
         },
 
-        showConfirmation: function (text, ok, always, cancel, okText, cancelText) {
-            Vue.set(state.ui.confirm, "text", text);
-            Vue.set(state.ui.confirm, "ok", ok);
-            Vue.set(state.ui.confirm, "always", always);
-            Vue.set(state.ui.confirm, "cancel", cancel);
-
-            if (okText) {
-                Vue.set(state.ui.confirm, "okText", okText);
-            }
-
-            if (cancelText) {
-                Vue.set(state.ui.confirm, "cancelText", cancelText);
-            }
+        showConfirmation: function (opts) {
+            Vue.set(state.ui.confirm, "text", opts.text);
+            Vue.set(state.ui.confirm, "ok", opts.ok);
+            Vue.set(state.ui.confirm, "always", opts.always);
+            Vue.set(state.ui.confirm, "cancel", opts.cancel);
+            Vue.set(state.ui.confirm, "posY", opts.posY);
+            Vue.set(state.ui.confirm, "okText", opts.okText || "Yes");
+            Vue.set(state.ui.confirm, "cancelText", opts.cancelText || "No");
         },
 
         clearConfirmation: function () {
@@ -568,6 +571,7 @@
             state.ui.confirm.cancel = null;
             state.ui.confirm.always = null;
             state.ui.confirm.text = null;
+            state.ui.confirm.posY = null;
         },
 
         createTimeslot: function (taskId) {
@@ -590,8 +594,9 @@
             Vue.delete(this.timeslotsById, id);
         },
 
-        askToRemoveTimeslot: function (id) {
-            const timeslot = this.timeslotsById[id];
+        askToRemoveTimeslot: function (evt) {
+            const timeslotId = evt.timeslotId;
+            const timeslot = this.timeslotsById[timeslotId];
             if (timeslot == null) {
                 return;
             }
@@ -603,11 +608,12 @@
             const begin = utils.formatTimestamp(computed.begin, "???");
             const end = utils.formatTimestamp(computed.end, "???");
 
-            this.showConfirmation(
-                `Remove ${begin} - ${end} of ${taskName}?`,
-                () => this.removeTimeslot(id),
-                this.clearConfirmation
-            );
+            this.showConfirmation({
+                text: `Remove ${begin} - ${end} of ${taskName}?`,
+                ok: () => this.removeTimeslot(timeslotId),
+                always: this.clearConfirmation,
+                posY: evt.posY,
+            });
         },
 
         timeslotToNewTask: function (id) {
@@ -635,18 +641,23 @@
             });
         },
 
-        clearAll: function () {
+        clearAll: function (posY) {
             const remove = () => {
                 this.nextId = initialId;
-                for (var taskId in this.tasksById) {
+                for (const taskId in this.tasksById) {
                     Vue.delete(this.tasksById, taskId);
                 }
-                for (var tsId in this.timeslotsById) {
+                for (const tsId in this.timeslotsById) {
                     Vue.delete(this.timeslotsById, tsId);
                 }
             };
 
-            this.showConfirmation("Remove all tasks?", remove, this.clearConfirmation);
+            this.showConfirmation({
+               text: "Remove all tasks?",
+                ok: remove,
+                always: this.clearConfirmation,
+                posY: posY,
+            });
         },
 
         resetTask: function (id) {
@@ -975,6 +986,14 @@
         mounted: function () {
             this.$el.addEventListener("click", this.onClick);
             document.addEventListener("keyup", this.onKeyup);
+
+            if(this.config.posY != null) {
+                const dialog = this.$el.querySelector(".confirm-dialog");
+                if(dialog != null) {
+                    dialog.style.position = "absolute";
+                    dialog.style.top = (this.config.posY - (dialog.clientHeight / 2)) + "px";
+                }
+            }
         },
 
         beforeDestroy: function () {
