@@ -19,6 +19,10 @@ export default {
     config: Object,
   },
 
+  data: () => ({
+    minMarginPercentage: 0.02,
+  }),
+
   mounted: function() {
     this.$el.addEventListener("click", this.onClick);
     document.addEventListener("keyup", this.onKeyup);
@@ -26,8 +30,33 @@ export default {
     if (this.config.posY != null) {
       const dialog = this.$el.querySelector(".confirm-dialog");
       if (dialog != null) {
+        const viewport = this.getViewport();
+        // Vertical margin: % of max height
+        const minMargin = this.minMarginPercentage * viewport.height;
+        const dialogRect = dialog.getBoundingClientRect();
+
+        // When the dialog with margins on both sides still has space left in the viewport
+        // we consider it to be rearrangeable
+        const rearrangeable = dialogRect.height + 2 * minMargin < viewport.height;
+
+        let top;
+        if (rearrangeable) {
+          // Target position for dialog: vertically centered at posY.
+          top = this.config.posY - dialog.clientHeight / 2;
+          const bottom = top + dialogRect.height;
+          if (top < minMargin) {
+            top = minMargin;
+          } else if (viewport.height - bottom < minMargin) {
+            top = viewport.height - minMargin - dialogRect.height;
+          }
+        } else {
+          // Not rearrangable, simply center vertically in viewport.
+          // This ignores config.posY.
+          top = viewport.height / 2 - dialog.clientHeight / 2;
+        }
+
         dialog.style.position = "absolute";
-        dialog.style.top = this.config.posY - dialog.clientHeight / 2 + "px";
+        dialog.style.top = top + "px";
       }
     }
   },
@@ -62,6 +91,15 @@ export default {
         // Cancel on escape
         this.cancel();
       }
+    },
+
+    getViewport: function() {
+      return {
+        top: 0,
+        left: 0,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
     },
   },
 };
