@@ -691,12 +691,16 @@ main {
 
 #time-tracker {
   padding: 2rem;
-  margin: 1rem auto 0 auto;
+  margin: 0 auto;
   display: none;
   max-width: 600px;
   color: @dark;
   background-color: white;
-  border-radius: 5px;
+
+  @media screen and (min-width: 600px) {
+    margin: 1rem auto;
+    border-radius: 0.5rem;
+  }
 
   *[draggable="true"] {
     cursor: grab;
