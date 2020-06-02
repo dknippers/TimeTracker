@@ -138,3 +138,112 @@ export default {
   },
 };
 </script>
+
+<style lang="less">
+@import "../styles/extends.less";
+@import "../styles/variables.less";
+
+#time-tracker {
+  .timeslot {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.25em 0;
+
+    &.dragging {
+      border: 2px dashed @purple;
+    }
+
+    > .timeslot-controls {
+      flex: 1;
+
+      > .timeslot-control {
+        visibility: hidden;
+        color: @dark;
+        padding: 0.35em;
+
+        > i {
+          display: inline-block;
+        }
+
+        &.timeslot-to-task {
+          > i {
+            transform: rotate(-90deg);
+          }
+        }
+
+        &:hover {
+          cursor: pointer;
+          color: @purple;
+
+          &.timeslot-remove {
+            color: @red;
+          }
+        }
+      }
+    }
+
+    &:hover {
+      > .timeslot-controls > .timeslot-control {
+        visibility: visible;
+      }
+    }
+
+    .timeslot-period {
+      flex: 1;
+      text-align: center;
+      display: flex;
+
+      .timeslot-begin {
+        flex: 4;
+        text-align: right;
+
+        > .edit-time {
+          text-align: right;
+        }
+
+        &:hover {
+          cursor: text;
+        }
+      }
+
+      .timeslot-separator {
+        flex: 1;
+      }
+
+      .timeslot-end {
+        flex: 4;
+        text-align: left;
+
+        &:hover {
+          cursor: text;
+        }
+      }
+
+      .edit-time {
+        width: 3em;
+        border: none;
+        font-size: 1em;
+        outline: none;
+        padding: 0;
+        font-weight: bold;
+      }
+    }
+
+    &.active .timeslot-end {
+      font-weight: bold;
+      color: @purple;
+    }
+
+    .timeslot-right {
+      flex: 1;
+      text-align: right;
+
+      .timeslot-duration {
+        font-size: 0.9em;
+        text-align: right;
+      }
+    }
+  }
+}
+</style>

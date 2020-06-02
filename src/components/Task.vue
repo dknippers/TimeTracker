@@ -244,4 +244,182 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="less">
+@import "../styles/extends.less";
+@import "../styles/variables.less";
+
+#time-tracker {
+  .task {
+    margin: 2em 0 0 0;
+    background-color: white;
+    box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+
+    ~ .task {
+      margin-top: 1em;
+    }
+
+    &.subtask {
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
+
+      ~ .subtask {
+        margin-top: 1em;
+      }
+    }
+
+    &.dropzone {
+      box-shadow: 0 0 2px 2px @purple;
+    }
+
+    &.dragging {
+      border: 2px dashed @purple;
+    }
+
+    > .task-head {
+      padding: 0;
+      background-color: @dark;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      > .left,
+      > .right {
+        flex: 2;
+      }
+
+      > .left {
+        display: flex;
+
+        > button {
+          flex: 1;
+          visibility: hidden;
+          padding: 0.5em;
+          border: none;
+          box-shadow: none;
+          color: @light;
+          max-width: 2.5em;
+
+          &.toggle-collapse,
+          &.add-subtask {
+            > i {
+              font-size: 1em;
+            }
+          }
+
+          &:hover {
+            background-color: white;
+            color: @purple;
+          }
+        }
+
+        > span {
+          visibility: hidden;
+        }
+
+        &:hover {
+          > span {
+            visibility: visible;
+          }
+
+          cursor: pointer;
+        }
+      }
+
+      &:hover > .left > button {
+        visibility: visible;
+      }
+
+      > .center {
+        flex: 3;
+
+        .task-name {
+          padding: 0.5em 0;
+          text-align: center;
+
+          &:hover {
+            cursor: text;
+          }
+
+          &.edit {
+            width: 100%;
+            border: none;
+            font-size: 1em;
+
+            &:focus {
+              &:extend(._focus);
+              border: none;
+            }
+          }
+        }
+      }
+
+      > .right {
+        display: flex;
+        justify-content: flex-end;
+
+        .task-duration-wrapper {
+          padding: 0.5em 1em;
+
+          .task-duration {
+            font-size: 0.9em;
+            font-weight: bold;
+            text-align: right;
+          }
+        }
+      }
+    }
+
+    &.subtask > .task-head {
+      background-color: #ddd;
+      color: @dark;
+
+      > .left > button {
+        color: @dark;
+
+        &:hover {
+          background-color: white;
+          color: @purple;
+        }
+      }
+    }
+
+    &.active {
+      > .task-head {
+        background-color: @purple;
+        color: white;
+
+        > .left > button {
+          color: white;
+
+          &:hover {
+            color: @purple;
+          }
+        }
+      }
+    }
+
+    > .task-controls {
+      display: flex;
+
+      > button {
+        flex: 1;
+      }
+    }
+
+    > .task-body {
+      padding: 0.5em 1em;
+
+      .subtasks {
+        font-size: 0.95em;
+      }
+    }
+
+    &.collapsed {
+      > .task-body {
+        display: none;
+      }
+    }
+  }
+}
+</style>
