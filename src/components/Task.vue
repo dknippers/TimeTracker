@@ -3,6 +3,7 @@
     class="task"
     :class="{
       active: task.isActive,
+      'active-ancestor': task.isActiveAncestor,
       dropzone: dropzone,
       dragging: dragging,
       subtask: task.parentId != null,
@@ -406,6 +407,13 @@ export default {
             color: @purple;
           }
         }
+      }
+    }
+
+    &.active-ancestor {
+      > .task-head > .right > .task-duration-wrapper {
+        background-color: @purple;
+        color: white;
       }
     }
 

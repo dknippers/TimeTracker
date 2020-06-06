@@ -172,11 +172,14 @@ export default {
     getComputedTask: function(task) {
       const timeslots = this.timeslotsByTask[task.id] || [];
 
+      const subTasks = this.getSubTasks(task).map(this.getComputedTask);
+
       return Object.assign({}, task, {
         duration: this.getTaskDuration(task),
         timeslots: timeslots.map(this.getComputedTimeslot),
-        subTasks: this.getSubTasks(task).map(this.getComputedTask),
+        subTasks,
         isActive: timeslots.some(timeslot => timeslot.begin != null && timeslot.end == null),
+        isActiveAncestor: subTasks.some(subTask => subTask.isActive || subTask.isActiveAncestor),
 
         // Reference to source object
         _source: task,
