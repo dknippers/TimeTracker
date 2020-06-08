@@ -668,6 +668,10 @@ main {
     border-radius: 0.5rem;
   }
 
+  * {
+    user-select: none;
+  }
+
   *[draggable="true"] {
     cursor: move;
   }

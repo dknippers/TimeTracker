@@ -10,7 +10,7 @@
       collapsed: collapsed,
     }"
   >
-    <div class="task-head" draggable="true">
+    <div class="task-head">
       <div class="left">
         <button type="button" title="Start" v-if="!task.isActive" @click="$emit('start-task', task.id)">
           <i class="fas fa-play"></i>
@@ -116,11 +116,54 @@ export default {
   mounted: function() {
     const el = this.$el;
 
-    el.addEventListener("dragstart", this.onDragStart);
-    el.addEventListener("dragend", this.onDragEnd);
     el.addEventListener("dragover", this.onDragOver);
-    el.addEventListener("dragleave", this.onDragLeave);
     el.addEventListener("drop", this.onDrop);
+    el.addEventListener("dragleave", this.onDragLeave);
+
+    const right = el.querySelector(".right");
+    let copy = null;
+
+    right.addEventListener("mousedown", e => {
+      const self = this;
+
+      const bcr = el.getBoundingClientRect();
+      this.mousePos.x = e.clientX - bcr.left;
+      this.mousePos.y = e.clientY - bcr.top;
+
+      copy = el.cloneNode(true);
+      copy.classList.add("outline");
+
+      this.dragging = true;
+
+      el.style.left = bcr.left + "px";
+      el.style.top = bcr.top + "px";
+      el.style.width = el.clientWidth + "px";
+      el.style.marginTop = 0;
+      el.style.position = "fixed";
+
+      el.parentNode.insertBefore(copy, el);
+
+      document.addEventListener("mouseup", cancel);
+
+      function cancel() {
+        if (copy == null) {
+          return;
+        }
+
+        el.removeAttribute("style");
+        copy.parentNode.removeChild(copy);
+        document.removeEventListener("mouseup", cancel);
+
+        self.dragging = false;
+      }
+    });
+
+    document.addEventListener("mousemove", e => {
+      if (this.dragging) {
+        el.style.left = e.clientX - this.mousePos.x + "px";
+        el.style.top = e.clientY - this.mousePos.y + "px";
+      }
+    });
 
     if (!this.task.name) {
       this.editName = true;
@@ -133,8 +176,6 @@ export default {
   },
 
   beforeDestroy: function() {
-    this.$el.removeEventListener("dragstart", this.onDragStart);
-    this.$el.removeEventListener("dragend", this.onDragEnd);
     this.$el.removeEventListener("dragover", this.onDragOver);
     this.$el.removeEventListener("drop", this.onDrop);
     this.$el.removeEventListener("dragleave", this.onDragLeave);
@@ -148,6 +189,11 @@ export default {
       dragging: false,
       editName: false,
       collapsed: false,
+
+      mousePos: {
+        x: null,
+        y: null,
+      },
     };
   },
 
@@ -426,13 +472,22 @@ export default {
     }
 
     &.dragging {
-      &:extend(._dragging all);
-      box-shadow: none;
+      opacity: 0.8;
     }
 
     &.collapsed {
       > .task-body {
         display: none;
+      }
+    }
+
+    &.outline {
+      outline: 2px dashed @purple;
+      box-shadow: none;
+
+      > .task-head,
+      .task-body {
+        visibility: hidden;
       }
     }
   }
