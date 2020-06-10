@@ -104,6 +104,7 @@
 <script>
 import * as utils from "../utils.js";
 import Timeslot from "./Timeslot.vue";
+import Vue from "vue";
 
 export default {
   name: "Task",
@@ -124,38 +125,40 @@ export default {
     let copy = null;
 
     right.addEventListener("mousedown", e => {
-      const self = this;
-
-      const bcr = el.getBoundingClientRect();
-      this.mousePos.x = e.clientX - bcr.left;
-      this.mousePos.y = e.clientY - bcr.top;
-
-      copy = el.cloneNode(true);
-      copy.classList.add("outline");
-
       this.dragging = true;
 
-      el.style.left = bcr.left + "px";
-      el.style.top = bcr.top + "px";
-      el.style.width = el.clientWidth + "px";
-      el.style.marginTop = 0;
-      el.style.position = "fixed";
+      // Wait for re-render :(
+      Vue.nextTick(() => {
+        const bcr = el.getBoundingClientRect();
+        this.mousePos.x = e.clientX - bcr.left;
+        this.mousePos.y = e.clientY - bcr.top;
 
-      el.parentNode.insertBefore(copy, el);
+        copy = el.cloneNode(true);
+        copy.classList.add("outline");
 
-      document.addEventListener("mouseup", cancel);
+        el.style.left = bcr.left + "px";
+        el.style.top = bcr.top + "px";
+        el.style.width = el.clientWidth + "px";
+        el.style.marginTop = 0;
+        el.style.position = "fixed";
 
-      function cancel() {
-        if (copy == null) {
-          return;
+        el.parentNode.insertBefore(copy, el);
+
+        const cancelFn = cancel.bind(this);
+        document.addEventListener("mouseup", cancelFn);
+
+        function cancel() {
+          if (copy == null) {
+            return;
+          }
+
+          el.removeAttribute("style");
+          copy.parentNode.removeChild(copy);
+          document.removeEventListener("mouseup", cancelFn);
+
+          this.dragging = false;
         }
-
-        el.removeAttribute("style");
-        copy.parentNode.removeChild(copy);
-        document.removeEventListener("mouseup", cancel);
-
-        self.dragging = false;
-      }
+      });
     });
 
     document.addEventListener("mousemove", e => {
