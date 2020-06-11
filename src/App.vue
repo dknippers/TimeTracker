@@ -49,6 +49,7 @@ import Vue from "vue";
 import * as utils from "./utils.js";
 import Task from "./components/Task.vue";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
+import debounce from "lodash/debounce";
 
 const initialId = 1;
 
@@ -602,17 +603,9 @@ export default {
       this.now = Date.now();
     },
 
-    skipSave: function(fn) {
-      this.dontSave = 1;
-      fn();
-      Vue.nextTick(() => delete this.dontSave);
-    },
-
     mainLoop: function(timeout) {
-      this.skipSave(this.setNow);
-
+      this.setNow();
       this.updateDocumentTitle();
-
       setTimeout(() => this.mainLoop(timeout), timeout);
     },
   },
@@ -625,18 +618,16 @@ export default {
     this.$el.addEventListener("drop", this.onDrop);
     this.$el.addEventListener("dragover", this.onDragOver);
     this.$el.addEventListener("dragleave", this.onDragLeave);
+
+    const debouncedSave = debounce(this.save, 250);
+    this.$watch("tasksById", debouncedSave, { deep: true });
+    this.$watch("timeslotsById", debouncedSave, { deep: true });
   },
 
   beforeDestroy: function() {
     this.$el.removeEventListener("drop", this.onDrop);
     this.$el.removeEventListener("dragover", this.onDragOver);
     this.$el.removeEventListener("dragleave", this.onDragLeave);
-  },
-
-  updated: function() {
-    if (!this.dontSave) {
-      this.save();
-    }
   },
 };
 </script>
