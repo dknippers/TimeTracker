@@ -40,7 +40,7 @@
       />
     </main>
 
-    <ConfirmDialog v-if="ui.confirm.ok" :config="ui.confirm" />
+    <ConfirmDialog v-if="confirmation.ok" :config="confirmation" />
   </div>
 </template>
 
@@ -51,558 +51,6 @@ import Task from "./components/Task.vue";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
 
 const initialId = 1;
-
-var state = {
-  nextId: initialId,
-  tasksById: {},
-  timeslotsById: {},
-
-  now: Date.now(),
-  dropzone: false,
-
-  ui: {
-    confirm: {
-      ok: null,
-      okText: null,
-      cancel: null,
-      cancelText: null,
-      text: null,
-      always: null,
-      posY: null,
-    },
-  },
-};
-
-var computed = {
-  taskList: function() {
-    return utils.keyedObjectToArray(this.tasksById, t => t.id);
-  },
-
-  timeslots: function() {
-    return utils.keyedObjectToArray(this.timeslotsById, ts => ts.begin);
-  },
-
-  timeslotsByTask: function() {
-    const timeslotsByTask = {};
-
-    for (const timeslot of this.timeslots) {
-      if (timeslot.taskId != null) {
-        if (timeslotsByTask[timeslot.taskId] == null) {
-          timeslotsByTask[timeslot.taskId] = [];
-        }
-
-        timeslotsByTask[timeslot.taskId].push(timeslot);
-      }
-    }
-
-    return timeslotsByTask;
-  },
-
-  tasks: function() {
-    return this.taskList.map(this.getComputedTask);
-  },
-
-  rootTasks: function() {
-    return this.tasks.filter(task => task.parentId == null);
-  },
-
-  subTasks: function() {
-    const subTasks = {};
-
-    for (const task of this.taskList) {
-      if (task.parentId != null) {
-        if (subTasks[task.parentId] == null) {
-          subTasks[task.parentId] = [];
-        }
-
-        subTasks[task.parentId].push(task);
-      }
-    }
-
-    return subTasks;
-  },
-
-  activeTask: function() {
-    return this.tasks.find(task => task.isActive);
-  },
-
-  ancestors: function() {
-    const ancestors = {};
-
-    const cache = {};
-
-    for (const task of this.taskList) {
-      ancestors[task.id] = this.getAncestors(task, cache);
-    }
-
-    return ancestors;
-  },
-
-  totalDuration: function() {
-    return this.rootTasks.reduce((sum, task) => sum + this.getTaskDuration(task), 0);
-  },
-
-  absoluteTotalDuration: function() {
-    return Math.abs(this.totalDuration);
-  },
-};
-
-var methods = {
-  getComputedTask: function(task) {
-    const timeslots = this.timeslotsByTask[task.id] || [];
-
-    return Object.assign({}, task, {
-      duration: this.getTaskDuration(task),
-      timeslots: timeslots.map(this.getComputedTimeslot),
-      subTasks: this.getSubTasks(task).map(this.getComputedTask),
-      isActive: timeslots.some(timeslot => timeslot.begin != null && timeslot.end == null),
-
-      // Reference to source object
-      _source: task,
-    });
-  },
-
-  getSubTasks: function(parentTask) {
-    const subTasks = [];
-
-    for (const task of this.taskList) {
-      if (task.parentId === parentTask.id) {
-        subTasks.push(task);
-      }
-    }
-
-    return subTasks;
-  },
-
-  getComputedTimeslot: function(timeslot) {
-    return Object.assign({}, timeslot, {
-      isActive: timeslot.begin != null && timeslot.end == null,
-      end: timeslot.end || this.now,
-      duration: this.getTimeslotDuration(timeslot),
-
-      // Reference to source object
-      _source: timeslot,
-    });
-  },
-
-  getAncestors: function(task, cache) {
-    const parent = this.tasksById[task.parentId];
-    if (parent == null) {
-      return [];
-    }
-
-    if (cache[task.id] != null) {
-      return cache[task.id];
-    }
-
-    if (parent != null) {
-      const ancestors = [parent, ...this.getAncestors(parent, cache)];
-      cache[task.id] = ancestors;
-      return ancestors;
-    }
-  },
-
-  /**
-   * @returns {boolean} true if taskA is an ancestor of taskB
-   */
-  isAncestor: function(taskA, taskB) {
-    return this.ancestors[taskB.id].indexOf(taskA) > -1;
-  },
-
-  save: function() {
-    var toSave = {};
-    for (var key in state) {
-      if (key.indexOf("_") === 0 || key.indexOf("$") === 0 || key === "now" || key === "ui") {
-        // Skip internal (_ / $) values and this.now
-        continue;
-      }
-
-      toSave[key] = state[key];
-    }
-
-    utils.saveToStorage("time-tracker", toSave);
-  },
-
-  inputTask: function(inputElement) {
-    this.addTask({ name: inputElement.value });
-    inputElement.value = "";
-  },
-
-  addTask: function(opts) {
-    const name = opts.name;
-    const parentId = opts.parentId;
-
-    const newTask = this.createTask(name, parentId);
-
-    this.updateTask(
-      newTask.id,
-      () => newTask,
-      () => this.startTask(newTask.id)
-    );
-  },
-
-  createTask: function(name, parentId) {
-    const id = this.nextId++;
-
-    const task = {
-      id,
-      parentId,
-      name: name,
-    };
-
-    Vue.set(this.tasksById, id, task);
-
-    return task;
-  },
-
-  moveTask: function(opts) {
-    var taskId = opts.taskId;
-    var parentId = opts.parentId;
-
-    if (taskId != null && parentId != null && taskId !== parentId) {
-      const task = this.tasksById[taskId];
-      const parent = this.tasksById[parentId];
-
-      if (task == null || parent == null || task.parentId === parent.id) {
-        return;
-      }
-
-      if (this.isAncestor(task, parent)) {
-        // A task cannot be moved to it's descendant,
-        // that can create a cycle
-        return;
-      }
-
-      this.updateTask(taskId, task => {
-        Vue.set(task, "parentId", parentId);
-        return task;
-      });
-    }
-  },
-
-  changeTimeslotBegin: function(args) {
-    this.changeTimeslotTimestamp(args, "begin");
-  },
-
-  changeTimeslotEnd: function(args) {
-    this.changeTimeslotTimestamp(args, "end");
-  },
-
-  changeTimeslotTimestamp: function(args, property) {
-    const timeslotId = args.timeslotId;
-    const timestamp = args.timestamp;
-
-    this.updateTimeslot(timeslotId, timeslot => {
-      Vue.set(timeslot, property, timestamp);
-      return timeslot;
-    });
-  },
-
-  onDrop: function(ev) {
-    this.dropzone = false;
-
-    const taskId = ev.dataTransfer.getData("taskId");
-    if (!taskId) {
-      return;
-    }
-
-    this.updateTask(taskId, task => {
-      Vue.delete(task, "parentId");
-      return task;
-    });
-  },
-
-  onDragOver: function(ev) {
-    ev.preventDefault();
-
-    const isTimeslot = ev.dataTransfer.types.indexOf("timeslotid") > -1;
-    if (isTimeslot) {
-      ev.dataTransfer.dropEffect = "none";
-    } else {
-      this.dropzone = true;
-    }
-  },
-
-  onDragLeave: function(ev) {
-    ev.preventDefault();
-
-    this.dropzone = false;
-  },
-
-  updateTask: function(id, updateFn, doneFn) {
-    const currentTask = this.tasksById[id];
-    updateFn(currentTask);
-    if (typeof doneFn === "function") {
-      doneFn();
-    }
-  },
-
-  updateTimeslot: function(id, updateFn, doneFn) {
-    const currentTimeslot = this.timeslotsById[id];
-    if (currentTimeslot == null) {
-      console.warn(`No timeslot found with id ${id}`);
-      return;
-    }
-
-    const newTimeslot = updateFn(currentTimeslot);
-    Vue.set(this.timeslotsById, newTimeslot.id, newTimeslot);
-    if (typeof doneFn === "function") {
-      doneFn();
-    }
-  },
-
-  startTask: function(id) {
-    const oldTask = this.activeTask;
-    if (oldTask && oldTask.id !== id) {
-      this.stopTask(oldTask.id);
-    }
-
-    this.updateTask(id, task => {
-      this.createTimeslot(id);
-      return task;
-    });
-  },
-
-  stopTask: function(id) {
-    this.updateTask(id, task => {
-      if (task == null) {
-        return;
-      }
-
-      const timeslots = this.timeslotsByTask[id] || [];
-      const activeSlots = timeslots.filter(slot => slot.begin != null && slot.end == null);
-
-      const now = Date.now();
-
-      for (const activeSlot of activeSlots) {
-        Vue.set(activeSlot, "end", now);
-      }
-
-      return task;
-    });
-  },
-
-  removeTask: function(id) {
-    Vue.delete(this.tasksById, id);
-
-    const subTasks = this.subTasks[id];
-    if (Array.isArray(subTasks)) {
-      for (const subTask of subTasks) {
-        this.removeTask(subTask.id);
-      }
-    }
-
-    const timeslots = this.timeslotsByTask[id];
-    if (Array.isArray(timeslots)) {
-      for (const timeslot of timeslots) {
-        this.removeTimeslot(timeslot.id);
-      }
-    }
-
-    if (this.tasks.length === 0) {
-      this.nextId = initialId;
-    }
-  },
-
-  askToRemoveTask: function(evt) {
-    const taskId = evt.taskId;
-
-    const task = this.tasksById[taskId];
-    if (task == null) {
-      return;
-    }
-
-    const taskName = task.name || "<no name>";
-
-    this.showConfirmation({
-      text: `Delete ${taskName}?`,
-      ok: () => this.removeTask(taskId),
-      always: this.clearConfirmation,
-      posY: evt.posY,
-    });
-  },
-
-  showConfirmation: function(opts) {
-    Vue.set(state.ui.confirm, "text", opts.text);
-    Vue.set(state.ui.confirm, "ok", opts.ok);
-    Vue.set(state.ui.confirm, "always", opts.always);
-    Vue.set(state.ui.confirm, "cancel", opts.cancel);
-    Vue.set(state.ui.confirm, "posY", opts.posY);
-    Vue.set(state.ui.confirm, "okText", opts.okText || "Yes");
-    Vue.set(state.ui.confirm, "cancelText", opts.cancelText || "No");
-  },
-
-  clearConfirmation: function() {
-    state.ui.confirm.ok = null;
-    state.ui.confirm.cancel = null;
-    state.ui.confirm.always = null;
-    state.ui.confirm.text = null;
-    state.ui.confirm.posY = null;
-  },
-
-  createTimeslot: function(taskId) {
-    const id = this.nextId++;
-
-    this.setNow();
-
-    const timeslot = {
-      id,
-      taskId,
-      begin: this.now,
-    };
-
-    Vue.set(this.timeslotsById, id, timeslot);
-
-    return timeslot;
-  },
-
-  removeTimeslot: function(id) {
-    Vue.delete(this.timeslotsById, id);
-  },
-
-  askToRemoveTimeslot: function(evt) {
-    const timeslotId = evt.timeslotId;
-    const timeslot = this.timeslotsById[timeslotId];
-    if (timeslot == null) {
-      return;
-    }
-
-    const task = this.tasksById[timeslot.taskId];
-    const taskName = (task && task.name) || "<no task>";
-
-    const computed = this.getComputedTimeslot(timeslot);
-    const begin = utils.formatTimestamp(computed.begin, "???");
-    const end = utils.formatTimestamp(computed.end, "???");
-
-    this.showConfirmation({
-      text: `Remove ${begin} - ${end} of ${taskName}?`,
-      ok: () => this.removeTimeslot(timeslotId),
-      always: this.clearConfirmation,
-      posY: evt.posY,
-    });
-  },
-
-  timeslotToNewTask: function(id) {
-    const timeslot = this.timeslotsById[id];
-
-    if (timeslot == null) {
-      return;
-    }
-
-    const newTask = this.createTask(null, timeslot.taskId);
-    this.timeslotToTask({ id, taskId: newTask.id });
-  },
-
-  timeslotToTask: function(opts) {
-    const id = opts.id;
-    const taskId = opts.taskId;
-
-    if (this.tasksById[taskId] == null) {
-      return;
-    }
-
-    this.updateTimeslot(id, timeslot => {
-      Vue.set(timeslot, "taskId", taskId);
-      return timeslot;
-    });
-  },
-
-  clearAll: function(posY) {
-    const remove = () => {
-      this.nextId = initialId;
-      for (const taskId in this.tasksById) {
-        Vue.delete(this.tasksById, taskId);
-      }
-      for (const tsId in this.timeslotsById) {
-        Vue.delete(this.timeslotsById, tsId);
-      }
-    };
-
-    this.showConfirmation({
-      text: "Remove all tasks?",
-      ok: remove,
-      always: this.clearConfirmation,
-      posY: posY,
-    });
-  },
-
-  resetTask: function(id) {
-    this.updateTask(id, task => {
-      this.clearTimeslots(id);
-      return task;
-    });
-  },
-
-  clearTimeslots: function(taskId) {
-    const timeslots = this.timeslotsByTask[taskId];
-    if (Array.isArray(timeslots)) {
-      for (const timeslot of timeslots) {
-        Vue.delete(this.timeslotsById, timeslot.id);
-      }
-    }
-  },
-
-  getTimeslotDuration: function(ts) {
-    if (ts == null || ts.begin == null) {
-      return 0;
-    }
-
-    const end = ts.end || this.now;
-
-    return Math.round((end - ts.begin) / 1000);
-  },
-
-  getTaskDuration: function(task) {
-    const timeslots = this.timeslotsByTask[task.id] || [];
-    const taskSeconds = timeslots.reduce((sum, ts) => sum + this.getTimeslotDuration(ts), 0);
-
-    const subTasks = this.subTasks[task.id];
-    let subTasksSeconds = 0;
-    if (Array.isArray(subTasks)) {
-      subTasksSeconds = subTasks.reduce((sum, subTask) => sum + this.getTaskDuration(subTask), 0);
-    }
-
-    return taskSeconds + subTasksSeconds;
-  },
-
-  updateDocumentTitle: function() {
-    if (this.activeTask == null || this.activeTask.duration == null) {
-      if (document.title !== this.documentTitle) {
-        document.title = this.documentTitle;
-      }
-    } else {
-      const duration = utils.formatDuration(this.activeTask.duration, {
-        showZero: false,
-        showSeconds: Math.abs(this.activeTask.duration) < 60,
-      });
-
-      if (duration != null) {
-        const name = this.activeTask.name || "";
-        document.title = `${duration} - ${name}`;
-      }
-    }
-  },
-
-  formatDuration: utils.formatDuration,
-
-  setNow: function() {
-    this.now = Date.now();
-  },
-
-  skipSave: function(fn) {
-    this.dontSave = 1;
-    fn();
-    Vue.nextTick(() => delete this.dontSave);
-  },
-
-  mainLoop: function(timeout) {
-    this.skipSave(this.setNow);
-
-    this.updateDocumentTitle();
-
-    setTimeout(() => this.mainLoop(timeout), timeout);
-  },
-};
 
 Vue.directive("focus", {
   inserted: el => el.focus(),
@@ -615,16 +63,558 @@ export default {
     ConfirmDialog,
   },
 
-  data: () => state,
+  data: () => {
+    const state = {
+      // Persisted state
+      nextId: initialId,
+      tasksById: {},
+      timeslotsById: {},
 
-  methods: methods,
-  computed: computed,
+      // Transient state
+      now: Date.now(),
+      dropzone: false,
 
-  beforeCreate: function() {
-    var oldState = utils.getFromStorage("time-tracker");
-    if (oldState != null) {
-      Object.assign(state, oldState);
+      confirmation: {
+        ok: null,
+        okText: null,
+        cancel: null,
+        cancelText: null,
+        text: null,
+        always: null,
+        posY: null,
+      },
+    };
+
+    const savedState = utils.getFromStorage("time-tracker");
+    if (savedState != null) {
+      Object.assign(state, savedState);
     }
+
+    return state;
+  },
+
+  computed: {
+    taskList: function() {
+      return utils.keyedObjectToArray(this.tasksById, t => t.id);
+    },
+
+    timeslots: function() {
+      return utils.keyedObjectToArray(this.timeslotsById, ts => ts.begin);
+    },
+
+    timeslotsByTask: function() {
+      const timeslotsByTask = {};
+
+      for (const timeslot of this.timeslots) {
+        if (timeslot.taskId != null) {
+          if (timeslotsByTask[timeslot.taskId] == null) {
+            timeslotsByTask[timeslot.taskId] = [];
+          }
+
+          timeslotsByTask[timeslot.taskId].push(timeslot);
+        }
+      }
+
+      return timeslotsByTask;
+    },
+
+    tasks: function() {
+      return this.taskList.map(this.getComputedTask);
+    },
+
+    rootTasks: function() {
+      return this.tasks.filter(task => task.parentId == null);
+    },
+
+    subTasks: function() {
+      const subTasks = {};
+
+      for (const task of this.taskList) {
+        if (task.parentId != null) {
+          if (subTasks[task.parentId] == null) {
+            subTasks[task.parentId] = [];
+          }
+
+          subTasks[task.parentId].push(task);
+        }
+      }
+
+      return subTasks;
+    },
+
+    activeTask: function() {
+      return this.tasks.find(task => task.isActive);
+    },
+
+    ancestors: function() {
+      const ancestors = {};
+
+      const cache = {};
+
+      for (const task of this.taskList) {
+        ancestors[task.id] = this.getAncestors(task, cache);
+      }
+
+      return ancestors;
+    },
+
+    totalDuration: function() {
+      return this.rootTasks.reduce((sum, task) => sum + this.getTaskDuration(task), 0);
+    },
+
+    absoluteTotalDuration: function() {
+      return Math.abs(this.totalDuration);
+    },
+  },
+
+  methods: {
+    getComputedTask: function(task) {
+      const timeslots = this.timeslotsByTask[task.id] || [];
+
+      return Object.assign({}, task, {
+        duration: this.getTaskDuration(task),
+        timeslots: timeslots.map(this.getComputedTimeslot),
+        subTasks: this.getSubTasks(task).map(this.getComputedTask),
+        isActive: timeslots.some(timeslot => timeslot.begin != null && timeslot.end == null),
+
+        // Reference to source object
+        _source: task,
+      });
+    },
+
+    getSubTasks: function(parentTask) {
+      const subTasks = [];
+
+      for (const task of this.taskList) {
+        if (task.parentId === parentTask.id) {
+          subTasks.push(task);
+        }
+      }
+
+      return subTasks;
+    },
+
+    getComputedTimeslot: function(timeslot) {
+      return Object.assign({}, timeslot, {
+        isActive: timeslot.begin != null && timeslot.end == null,
+        end: timeslot.end || this.now,
+        duration: this.getTimeslotDuration(timeslot),
+
+        // Reference to source object
+        _source: timeslot,
+      });
+    },
+
+    getAncestors: function(task, cache) {
+      const parent = this.tasksById[task.parentId];
+      if (parent == null) {
+        return [];
+      }
+
+      if (cache[task.id] != null) {
+        return cache[task.id];
+      }
+
+      if (parent != null) {
+        const ancestors = [parent, ...this.getAncestors(parent, cache)];
+        cache[task.id] = ancestors;
+        return ancestors;
+      }
+    },
+
+    /**
+     * @returns {boolean} true if taskA is an ancestor of taskB
+     */
+    isAncestor: function(taskA, taskB) {
+      return this.ancestors[taskB.id].indexOf(taskA) > -1;
+    },
+
+    save: function() {
+      // Persist subset of state
+      const { nextId, tasksById, timeslotsById } = this;
+      const toSave = { nextId, tasksById, timeslotsById };
+      utils.saveToStorage("time-tracker", toSave);
+    },
+
+    inputTask: function(inputElement) {
+      this.addTask({ name: inputElement.value });
+      inputElement.value = "";
+    },
+
+    addTask: function(opts) {
+      const name = opts.name;
+      const parentId = opts.parentId;
+
+      const newTask = this.createTask(name, parentId);
+
+      this.updateTask(
+        newTask.id,
+        () => newTask,
+        () => this.startTask(newTask.id)
+      );
+    },
+
+    createTask: function(name, parentId) {
+      const id = this.nextId++;
+
+      const task = {
+        id,
+        parentId,
+        name: name,
+      };
+
+      Vue.set(this.tasksById, id, task);
+
+      return task;
+    },
+
+    moveTask: function(opts) {
+      var taskId = opts.taskId;
+      var parentId = opts.parentId;
+
+      if (taskId != null && parentId != null && taskId !== parentId) {
+        const task = this.tasksById[taskId];
+        const parent = this.tasksById[parentId];
+
+        if (task == null || parent == null || task.parentId === parent.id) {
+          return;
+        }
+
+        if (this.isAncestor(task, parent)) {
+          // A task cannot be moved to it's descendant,
+          // that can create a cycle
+          return;
+        }
+
+        this.updateTask(taskId, task => {
+          Vue.set(task, "parentId", parentId);
+          return task;
+        });
+      }
+    },
+
+    changeTimeslotBegin: function(args) {
+      this.changeTimeslotTimestamp(args, "begin");
+    },
+
+    changeTimeslotEnd: function(args) {
+      this.changeTimeslotTimestamp(args, "end");
+    },
+
+    changeTimeslotTimestamp: function(args, property) {
+      const timeslotId = args.timeslotId;
+      const timestamp = args.timestamp;
+
+      this.updateTimeslot(timeslotId, timeslot => {
+        Vue.set(timeslot, property, timestamp);
+        return timeslot;
+      });
+    },
+
+    onDrop: function(ev) {
+      this.dropzone = false;
+
+      const taskId = ev.dataTransfer.getData("taskId");
+      if (!taskId) {
+        return;
+      }
+
+      this.updateTask(taskId, task => {
+        Vue.delete(task, "parentId");
+        return task;
+      });
+    },
+
+    onDragOver: function(ev) {
+      ev.preventDefault();
+
+      const isTimeslot = ev.dataTransfer.types.indexOf("timeslotid") > -1;
+      if (isTimeslot) {
+        ev.dataTransfer.dropEffect = "none";
+      } else {
+        this.dropzone = true;
+      }
+    },
+
+    onDragLeave: function(ev) {
+      ev.preventDefault();
+
+      this.dropzone = false;
+    },
+
+    updateTask: function(id, updateFn, doneFn) {
+      const currentTask = this.tasksById[id];
+      updateFn(currentTask);
+      if (typeof doneFn === "function") {
+        doneFn();
+      }
+    },
+
+    updateTimeslot: function(id, updateFn, doneFn) {
+      const currentTimeslot = this.timeslotsById[id];
+      if (currentTimeslot == null) {
+        console.warn(`No timeslot found with id ${id}`);
+        return;
+      }
+
+      const newTimeslot = updateFn(currentTimeslot);
+      Vue.set(this.timeslotsById, newTimeslot.id, newTimeslot);
+      if (typeof doneFn === "function") {
+        doneFn();
+      }
+    },
+
+    startTask: function(id) {
+      const oldTask = this.activeTask;
+      if (oldTask && oldTask.id !== id) {
+        this.stopTask(oldTask.id);
+      }
+
+      this.updateTask(id, task => {
+        this.createTimeslot(id);
+        return task;
+      });
+    },
+
+    stopTask: function(id) {
+      this.updateTask(id, task => {
+        if (task == null) {
+          return;
+        }
+
+        const timeslots = this.timeslotsByTask[id] || [];
+        const activeSlots = timeslots.filter(slot => slot.begin != null && slot.end == null);
+
+        const now = Date.now();
+
+        for (const activeSlot of activeSlots) {
+          Vue.set(activeSlot, "end", now);
+        }
+
+        return task;
+      });
+    },
+
+    removeTask: function(id) {
+      Vue.delete(this.tasksById, id);
+
+      const subTasks = this.subTasks[id];
+      if (Array.isArray(subTasks)) {
+        for (const subTask of subTasks) {
+          this.removeTask(subTask.id);
+        }
+      }
+
+      const timeslots = this.timeslotsByTask[id];
+      if (Array.isArray(timeslots)) {
+        for (const timeslot of timeslots) {
+          this.removeTimeslot(timeslot.id);
+        }
+      }
+
+      if (this.tasks.length === 0) {
+        this.nextId = initialId;
+      }
+    },
+
+    askToRemoveTask: function(evt) {
+      const taskId = evt.taskId;
+
+      const task = this.tasksById[taskId];
+      if (task == null) {
+        return;
+      }
+
+      const taskName = task.name || "<no name>";
+
+      this.showConfirmation({
+        text: `Delete ${taskName}?`,
+        ok: () => this.removeTask(taskId),
+        always: this.clearConfirmation,
+        posY: evt.posY,
+      });
+    },
+
+    showConfirmation: function(opts) {
+      Vue.set(this.confirmation, "text", opts.text);
+      Vue.set(this.confirmation, "ok", opts.ok);
+      Vue.set(this.confirmation, "always", opts.always);
+      Vue.set(this.confirmation, "cancel", opts.cancel);
+      Vue.set(this.confirmation, "posY", opts.posY);
+      Vue.set(this.confirmation, "okText", opts.okText || "Yes");
+      Vue.set(this.confirmation, "cancelText", opts.cancelText || "No");
+    },
+
+    clearConfirmation: function() {
+      this.confirmation.ok = null;
+      this.confirmation.cancel = null;
+      this.confirmation.always = null;
+      this.confirmation.text = null;
+      this.confirmation.posY = null;
+    },
+
+    createTimeslot: function(taskId) {
+      const id = this.nextId++;
+
+      this.setNow();
+
+      const timeslot = {
+        id,
+        taskId,
+        begin: this.now,
+      };
+
+      Vue.set(this.timeslotsById, id, timeslot);
+
+      return timeslot;
+    },
+
+    removeTimeslot: function(id) {
+      Vue.delete(this.timeslotsById, id);
+    },
+
+    askToRemoveTimeslot: function(evt) {
+      const timeslotId = evt.timeslotId;
+      const timeslot = this.timeslotsById[timeslotId];
+      if (timeslot == null) {
+        return;
+      }
+
+      const task = this.tasksById[timeslot.taskId];
+      const taskName = (task && task.name) || "<no task>";
+
+      const computed = this.getComputedTimeslot(timeslot);
+      const begin = utils.formatTimestamp(computed.begin, "???");
+      const end = utils.formatTimestamp(computed.end, "???");
+
+      this.showConfirmation({
+        text: `Remove ${begin} - ${end} of ${taskName}?`,
+        ok: () => this.removeTimeslot(timeslotId),
+        always: this.clearConfirmation,
+        posY: evt.posY,
+      });
+    },
+
+    timeslotToNewTask: function(id) {
+      const timeslot = this.timeslotsById[id];
+
+      if (timeslot == null) {
+        return;
+      }
+
+      const newTask = this.createTask(null, timeslot.taskId);
+      this.timeslotToTask({ id, taskId: newTask.id });
+    },
+
+    timeslotToTask: function(opts) {
+      const id = opts.id;
+      const taskId = opts.taskId;
+
+      if (this.tasksById[taskId] == null) {
+        return;
+      }
+
+      this.updateTimeslot(id, timeslot => {
+        Vue.set(timeslot, "taskId", taskId);
+        return timeslot;
+      });
+    },
+
+    clearAll: function(posY) {
+      const remove = () => {
+        this.nextId = initialId;
+        for (const taskId in this.tasksById) {
+          Vue.delete(this.tasksById, taskId);
+        }
+        for (const tsId in this.timeslotsById) {
+          Vue.delete(this.timeslotsById, tsId);
+        }
+      };
+
+      this.showConfirmation({
+        text: "Remove all tasks?",
+        ok: remove,
+        always: this.clearConfirmation,
+        posY: posY,
+      });
+    },
+
+    resetTask: function(id) {
+      this.updateTask(id, task => {
+        this.clearTimeslots(id);
+        return task;
+      });
+    },
+
+    clearTimeslots: function(taskId) {
+      const timeslots = this.timeslotsByTask[taskId];
+      if (Array.isArray(timeslots)) {
+        for (const timeslot of timeslots) {
+          Vue.delete(this.timeslotsById, timeslot.id);
+        }
+      }
+    },
+
+    getTimeslotDuration: function(ts) {
+      if (ts == null || ts.begin == null) {
+        return 0;
+      }
+
+      const end = ts.end || this.now;
+
+      return Math.round((end - ts.begin) / 1000);
+    },
+
+    getTaskDuration: function(task) {
+      const timeslots = this.timeslotsByTask[task.id] || [];
+      const taskSeconds = timeslots.reduce((sum, ts) => sum + this.getTimeslotDuration(ts), 0);
+
+      const subTasks = this.subTasks[task.id];
+      let subTasksSeconds = 0;
+      if (Array.isArray(subTasks)) {
+        subTasksSeconds = subTasks.reduce((sum, subTask) => sum + this.getTaskDuration(subTask), 0);
+      }
+
+      return taskSeconds + subTasksSeconds;
+    },
+
+    updateDocumentTitle: function() {
+      if (this.activeTask == null || this.activeTask.duration == null) {
+        if (document.title !== this.documentTitle) {
+          document.title = this.documentTitle;
+        }
+      } else {
+        const duration = utils.formatDuration(this.activeTask.duration, {
+          showZero: false,
+          showSeconds: Math.abs(this.activeTask.duration) < 60,
+        });
+
+        if (duration != null) {
+          const name = this.activeTask.name || "";
+          document.title = `${duration} - ${name}`;
+        }
+      }
+    },
+
+    formatDuration: utils.formatDuration,
+
+    setNow: function() {
+      this.now = Date.now();
+    },
+
+    skipSave: function(fn) {
+      this.dontSave = 1;
+      fn();
+      Vue.nextTick(() => delete this.dontSave);
+    },
+
+    mainLoop: function(timeout) {
+      this.skipSave(this.setNow);
+
+      this.updateDocumentTitle();
+
+      setTimeout(() => this.mainLoop(timeout), timeout);
+    },
   },
 
   mounted: function() {
