@@ -318,9 +318,9 @@ var methods = {
     const isTimeslot = ev.dataTransfer.types.indexOf("timeslotid") > -1;
     if (isTimeslot) {
       ev.dataTransfer.dropEffect = "none";
+    } else {
+      this.dropzone = true;
     }
-
-    this.dropzone = true;
   },
 
   onDragLeave: function(ev) {
@@ -809,6 +809,11 @@ main {
     &:active {
       &:extend(._active);
     }
+  }
+
+  &.dropzone {
+    &:extend(._dropzone);
+    border-radius: 0;
   }
 }
 </style>

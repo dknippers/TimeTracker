@@ -150,10 +150,6 @@ export default {
     align-items: center;
     padding: 0.25em 0;
 
-    &.dragging {
-      border: 2px dashed @purple;
-    }
-
     > .timeslot-controls {
       flex: 1;
 
@@ -243,6 +239,10 @@ export default {
         font-size: 0.9em;
         text-align: right;
       }
+    }
+
+    &.dragging {
+      &:extend(._dragging all);
     }
   }
 }

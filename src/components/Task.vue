@@ -6,7 +6,7 @@
       dropzone: dropzone,
       dragging: dragging,
       subtask: task.parentId != null,
-      collapsed: collapsed,
+      collapsed: collapsed || collapse,
     }"
   >
     <div class="task-head" draggable="true">
@@ -79,6 +79,7 @@
           v-for="subTask in task.subTasks"
           :key="subTask.id"
           :task="subTask"
+          :collapse="dragging"
           @add-task="$emit('add-task', $event)"
           @remove-task="$emit('remove-task', $event)"
           @reset-task="$emit('reset-task', $event)"
@@ -106,6 +107,7 @@ export default {
   props: {
     task: Object,
     parentId: Number,
+    collapse: Boolean,
   },
 
   mounted: function() {
@@ -170,10 +172,10 @@ export default {
 
       if (this.dragging) {
         // Cannot be their own dropzone
-        return;
+        ev.dataTransfer.dropEffect = "none";
+      } else {
+        this.dropzone = true;
       }
-
-      this.dropzone = true;
     },
 
     onDragEnter: function(ev) {
@@ -265,14 +267,6 @@ export default {
       ~ .subtask {
         margin-top: 1em;
       }
-    }
-
-    &.dropzone {
-      box-shadow: 0 0 2px 2px @purple;
-    }
-
-    &.dragging {
-      border: 2px dashed @purple;
     }
 
     > .task-head {
@@ -384,6 +378,22 @@ export default {
       }
     }
 
+    > .task-controls {
+      display: flex;
+
+      > button {
+        flex: 1;
+      }
+    }
+
+    > .task-body {
+      padding: 0.5em 1em;
+
+      .subtasks {
+        font-size: 0.95em;
+      }
+    }
+
     &.active {
       > .task-head {
         background-color: @purple;
@@ -399,20 +409,14 @@ export default {
       }
     }
 
-    > .task-controls {
-      display: flex;
-
-      > button {
-        flex: 1;
-      }
+    &.dropzone {
+      &:extend(._dropzone);
+      box-shadow: none;
     }
 
-    > .task-body {
-      padding: 0.5em 1em;
-
-      .subtasks {
-        font-size: 0.95em;
-      }
+    &.dragging {
+      &:extend(._dragging all);
+      box-shadow: none;
     }
 
     &.collapsed {
