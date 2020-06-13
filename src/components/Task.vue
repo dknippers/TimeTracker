@@ -307,6 +307,10 @@ export default {
           }
         }
 
+        &:hover > button {
+          visibility: visible;
+        }
+
         > span {
           visibility: hidden;
         }
@@ -318,10 +322,6 @@ export default {
 
           cursor: pointer;
         }
-      }
-
-      &:hover > .left > button {
-        visibility: visible;
       }
 
       > .center {

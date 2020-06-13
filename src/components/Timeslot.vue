@@ -177,10 +177,8 @@ export default {
           }
         }
       }
-    }
 
-    &:hover {
-      > .timeslot-controls > .timeslot-control {
+      &:hover > .timeslot-control {
         visibility: visible;
       }
     }
