@@ -178,10 +178,6 @@ export default {
       }
     },
 
-    onDragEnter: function(ev) {
-      ev.preventDefault();
-    },
-
     onDragLeave: function(ev) {
       ev.preventDefault();
 
