@@ -7,7 +7,8 @@
       dropzone: dropzone,
       dragging: dragging,
       subtask: task.parentId != null,
-      collapsed: collapsed,
+      collapsed: collapsed || collapse,
+      outline: outline,
     }"
   >
     <div class="task-head">
@@ -84,6 +85,7 @@
           v-for="subTask in task.subTasks"
           :key="subTask.id"
           :task="subTask"
+          :collapse="dragging || outline"
           @add-task="$emit('add-task', $event)"
           @remove-task-confirmation="$emit('remove-task-confirmation', $event)"
           @reset-task="$emit('reset-task', $event)"
@@ -95,6 +97,8 @@
           @remove-timeslot-confirmation="$emit('remove-timeslot-confirmation', $event)"
           @timeslot-to-new-task="$emit('timeslot-to-new-task', $event)"
           @timeslot-to-task="$emit('timeslot-to-task', $event)"
+          @task-dragstart="$emit('task-dragstart', $event)"
+          @task-dragend="$emit('task-dragend', $event)"
         />
       </div>
     </div>
@@ -104,7 +108,6 @@
 <script>
 import * as utils from "../utils.js";
 import Timeslot from "./Timeslot.vue";
-import Vue from "vue";
 
 export default {
   name: "Task",
@@ -112,6 +115,17 @@ export default {
   props: {
     task: Object,
     parentId: Number,
+    collapse: Boolean,
+    dragging: Boolean,
+  },
+
+  data: function() {
+    return {
+      dropzone: false,
+      outline: false,
+      editName: false,
+      collapsed: false,
+    };
   },
 
   mounted: function() {
@@ -122,49 +136,24 @@ export default {
     el.addEventListener("dragleave", this.onDragLeave);
 
     const right = el.querySelector(".right");
-    let copy = null;
 
     right.addEventListener("mousedown", e => {
-      this.dragging = true;
+      this.outline = true;
 
-      // Wait for re-render :(
-      Vue.nextTick(() => {
-        const bcr = el.getBoundingClientRect();
-        this.mousePos.x = e.clientX - bcr.left;
-        this.mousePos.y = e.clientY - bcr.top;
+      // Relative position of dragstart (within element).
+      const bcr = el.getBoundingClientRect();
+      const mouseX = e.clientX - bcr.left;
+      const mouseY = e.clientY - bcr.top;
 
-        copy = el.cloneNode(true);
-        copy.classList.add("outline");
+      this.$emit("task-dragstart", { id: this.task.id, element: el, mouseX, mouseY });
 
-        el.style.left = bcr.left + "px";
-        el.style.top = bcr.top + "px";
-        el.style.width = el.clientWidth + "px";
-        el.style.marginTop = 0;
-        el.style.position = "fixed";
+      const cancelFn = cancel.bind(this);
+      document.addEventListener("mouseup", cancelFn);
 
-        el.parentNode.insertBefore(copy, el);
-
-        const cancelFn = cancel.bind(this);
-        document.addEventListener("mouseup", cancelFn);
-
-        function cancel() {
-          if (copy == null) {
-            return;
-          }
-
-          el.removeAttribute("style");
-          copy.parentNode.removeChild(copy);
-          document.removeEventListener("mouseup", cancelFn);
-
-          this.dragging = false;
-        }
-      });
-    });
-
-    document.addEventListener("mousemove", e => {
-      if (this.dragging) {
-        el.style.left = e.clientX - this.mousePos.x + "px";
-        el.style.top = e.clientY - this.mousePos.y + "px";
+      function cancel() {
+        document.removeEventListener("mouseup", cancelFn);
+        this.outline = false;
+        this.$emit("task-dragend");
       }
     });
 
@@ -184,20 +173,6 @@ export default {
     this.$el.removeEventListener("dragleave", this.onDragLeave);
 
     document.removeEventListener("click", this.onClick);
-  },
-
-  data: function() {
-    return {
-      dropzone: false,
-      dragging: false,
-      editName: false,
-      collapsed: false,
-
-      mousePos: {
-        x: null,
-        y: null,
-      },
-    };
   },
 
   methods: {

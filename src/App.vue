@@ -37,6 +37,16 @@
         @remove-timeslot-confirmation="removeTimeslotConfirmation($event)"
         @timeslot-to-new-task="timeslotToNewTask($event)"
         @timeslot-to-task="timeslotToTask($event)"
+        @task-dragstart="draggingTask = $event"
+        @task-dragend="draggingTask = {}"
+      />
+
+      <DraggingTask
+        v-if="draggingTask.id"
+        :element="draggingTask.element"
+        :task="computedDraggingTask"
+        :mouse-x="draggingTask.mouseX"
+        :mouse-y="draggingTask.mouseY"
       />
     </main>
 
@@ -48,6 +58,7 @@
 import Vue from "vue";
 import * as utils from "./utils.js";
 import Task from "./components/Task.vue";
+import DraggingTask from "./components/DraggingTask.vue";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
 import debounce from "lodash/debounce";
 
@@ -62,6 +73,7 @@ export default {
   components: {
     Task,
     ConfirmDialog,
+    DraggingTask,
   },
 
   data: () => {
@@ -74,6 +86,13 @@ export default {
       // Transient state
       now: Date.now(),
       dropzone: false,
+
+      draggingTask: {
+        id: null,
+        element: null,
+        mouseX: null,
+        mouseY: null,
+      },
 
       confirmation: {
         ok: null,
@@ -165,6 +184,14 @@ export default {
 
     absoluteTotalDuration: function() {
       return Math.abs(this.totalDuration);
+    },
+
+    computedDraggingTask: function() {
+      if (this.draggingTask.id == null) {
+        return null;
+      } else {
+        return this.getComputedTask(this.tasksById[this.draggingTask.id]);
+      }
     },
   },
 
