@@ -26,6 +26,7 @@
         v-for="task in rootTasks"
         :key="task.id"
         :task="task"
+        :emit-mouseover="emitMouseover"
         @add-task="addTask($event)"
         @remove-task-confirmation="removeTaskConfirmation($event)"
         @reset-task="resetTask($event)"
@@ -37,6 +38,9 @@
         @remove-timeslot-confirmation="removeTimeslotConfirmation($event)"
         @timeslot-to-new-task="timeslotToNewTask($event)"
         @timeslot-to-task="timeslotToTask($event)"
+        @task-dragstart="emitMouseover = true"
+        @task-dragend="emitMouseover = false"
+        @task-mouseover="taskMouseover($event)"
       />
     </main>
 
@@ -74,6 +78,7 @@ export default {
       // Transient state
       now: Date.now(),
       dropzone: false,
+      emitMouseover: false,
 
       confirmation: {
         ok: null,
@@ -264,7 +269,11 @@ export default {
       return task;
     },
 
-    moveTask: function({ taskId, parentId }) {
+    moveTask: function(opts) {
+      console.log("moveTask", opts);
+      var taskId = opts.taskId;
+      var parentId = opts.parentId;
+
       if (taskId != null && parentId != null && taskId !== parentId) {
         const task = this.tasksById[taskId];
         const parent = this.tasksById[parentId];

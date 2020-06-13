@@ -84,6 +84,8 @@
           v-for="subTask in task.subTasks"
           :key="subTask.id"
           :task="subTask"
+          :collapse="dragging"
+          :emit-mouseover="emitMouseover"
           @add-task="$emit('add-task', $event)"
           @remove-task-confirmation="$emit('remove-task-confirmation', $event)"
           @reset-task="$emit('reset-task', $event)"
@@ -95,6 +97,18 @@
           @remove-timeslot-confirmation="$emit('remove-timeslot-confirmation', $event)"
           @timeslot-to-new-task="$emit('timeslot-to-new-task', $event)"
           @timeslot-to-task="$emit('timeslot-to-task', $event)"
+          @task-dragstart="$emit('task-dragstart', $event)"
+          @task-dragend="$emit('task-dragend', $event)"
+          @task-mouseover="$emit('task-mouseover', $event)"
+          @go="
+            stop = false;
+            $emit('go');
+          "
+          @stop="
+            stop = true;
+            dropzone = false;
+            $emit('stop');
+          "
         />
       </div>
     </div>
@@ -104,7 +118,7 @@
 <script>
 import * as utils from "../utils.js";
 import Timeslot from "./Timeslot.vue";
-import Vue from "vue";
+//import Vue from "vue";
 
 export default {
   name: "Task",
@@ -112,6 +126,8 @@ export default {
   props: {
     task: Object,
     parentId: Number,
+    collapse: Boolean,
+    emitMouseover: Boolean,
   },
 
   mounted: function() {
@@ -122,49 +138,32 @@ export default {
     el.addEventListener("dragleave", this.onDragLeave);
 
     const right = el.querySelector(".right");
-    let copy = null;
-
     right.addEventListener("mousedown", e => {
       this.dragging = true;
+      this.$emit("task-dragstart");
 
-      // Wait for re-render :(
-      Vue.nextTick(() => {
-        const bcr = el.getBoundingClientRect();
-        this.mousePos.x = e.clientX - bcr.left;
-        this.mousePos.y = e.clientY - bcr.top;
+      const bcr = el.getBoundingClientRect();
+      this.mousePos.x = e.clientX - bcr.left;
+      this.mousePos.y = e.clientY - bcr.top;
 
-        copy = el.cloneNode(true);
-        copy.classList.add("outline");
+      el.style.left = bcr.left + "px";
+      el.style.top = bcr.top + "px";
+      el.style.width = el.clientWidth + "px";
+      el.style.marginTop = 0;
+      el.style.position = "fixed";
 
-        el.style.left = bcr.left + "px";
-        el.style.top = bcr.top + "px";
-        el.style.width = el.clientWidth + "px";
-        el.style.marginTop = 0;
-        el.style.position = "fixed";
+      const cancelFn = cancel.bind(this);
+      document.addEventListener("mouseup", cancelFn);
 
-        el.parentNode.insertBefore(copy, el);
+      function cancel() {
+        el.removeAttribute("style");
+        document.removeEventListener("mouseup", cancelFn);
+        this.dragging = false;
+        this.$emit("task-dragend");
 
-        const cancelFn = cancel.bind(this);
-        document.addEventListener("mouseup", cancelFn);
-
-        function cancel() {
-          if (copy == null) {
-            return;
-          }
-
-          el.removeAttribute("style");
-          copy.parentNode.removeChild(copy);
-          document.removeEventListener("mouseup", cancelFn);
-
-          this.dragging = false;
-        }
-      });
-    });
-
-    document.addEventListener("mousemove", e => {
-      if (this.dragging) {
-        el.style.left = e.clientX - this.mousePos.x + "px";
-        el.style.top = e.clientY - this.mousePos.y + "px";
+        console.log("emitting DROPTASK");
+        const dropTaskEvent = new CustomEvent("dropTask", { detail: this.task.id });
+        document.dispatchEvent(dropTaskEvent);
       }
     });
 
@@ -184,6 +183,7 @@ export default {
     this.$el.removeEventListener("dragleave", this.onDragLeave);
 
     document.removeEventListener("click", this.onClick);
+    document.removeEventListener("mousemove", this.onMouseMove);
   },
 
   data: function() {
@@ -192,12 +192,28 @@ export default {
       dragging: false,
       editName: false,
       collapsed: false,
+      stop: false,
 
       mousePos: {
         x: null,
         y: null,
       },
     };
+  },
+
+  watch: {
+    emitMouseover: function(value, oldValue) {
+      if (value && !oldValue) {
+        document.addEventListener("mousemove", this.onMouseMove);
+        document.addEventListener("dropTask", this.onDropTask);
+      } else if (!value && oldValue) {
+        document.removeEventListener("mousemove", this.onMouseMove);
+        document.removeEventListener("dropTask", this.onDropTask);
+
+        // TODO: Necessary here?
+        this.dropzone = false;
+      }
+    },
   },
 
   methods: {
@@ -262,7 +278,18 @@ export default {
       }
     },
 
-    onDropTask: function(taskId) {
+    onDropTask: function(ev) {
+      if (!this.dropzone) {
+        return;
+      }
+
+      const taskId = ev.detail;
+      if (taskId == null) {
+        // TODO: FIX, this cannot happen
+        console.log("EMPTY TASKID");
+        return;
+      }
+
       this.$emit("move-task", {
         taskId: taskId,
         parentId: this.task.id,
@@ -285,6 +312,37 @@ export default {
       const task = ev.target.closest(".task");
       if (task !== this.$el) {
         this.cancelEdit();
+      }
+    },
+
+    onMouseMove: function(e) {
+      if (this.dragging) {
+        this.$el.style.left = e.clientX - this.mousePos.x + "px";
+        this.$el.style.top = e.clientY - this.mousePos.y + "px";
+      } else {
+        if (this.stop) {
+          this.dropzone = false;
+          return;
+        }
+
+        if (!this.dropzone) {
+          // Parents can be dropzone again
+          this.$emit("go");
+        }
+
+        // Check if mouse hovers over us.
+        const pos = this.$el.getBoundingClientRect();
+        const right = pos.left + pos.width;
+        const bottom = pos.top + pos.height;
+
+        if (e.clientX >= pos.left && e.clientX <= right && e.clientY >= pos.top && e.clientY <= bottom) {
+          this.dropzone = true;
+
+          // Stop parents from being dropzone
+          this.$emit("stop");
+        } else {
+          this.dropzone = false;
+        }
       }
     },
 
@@ -404,6 +462,10 @@ export default {
       > .right {
         display: flex;
         justify-content: flex-end;
+
+        &:hover {
+          cursor: move;
+        }
 
         .task-duration-wrapper {
           padding: 0.5em 1em;
