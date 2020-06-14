@@ -242,17 +242,9 @@ export default {
       inputElement.value = "";
     },
 
-    addTask: function(opts) {
-      const name = opts.name;
-      const parentId = opts.parentId;
-
+    addTask: function({ name, parentId }) {
       const newTask = this.createTask(name, parentId);
-
-      this.updateTask(
-        newTask.id,
-        () => newTask,
-        () => this.startTask(newTask.id)
-      );
+      this.startTask(newTask.id);
     },
 
     createTask: function(name, parentId) {
@@ -269,9 +261,7 @@ export default {
       return task;
     },
 
-    moveTask: function(opts) {
-      const { taskId, parentId } = opts;
-
+    moveTask: function({ taskId, parentId }) {
       if (taskId != null && parentId != null && taskId !== parentId) {
         const task = this.tasksById[taskId];
         const parent = this.tasksById[parentId];
@@ -511,10 +501,7 @@ export default {
       this.timeslotToTask({ id, taskId: newTask.id });
     },
 
-    timeslotToTask: function(opts) {
-      const id = opts.id;
-      const taskId = opts.taskId;
-
+    timeslotToTask: function({ id, taskId }) {
       if (this.tasksById[taskId] == null) {
         return;
       }
