@@ -161,7 +161,11 @@ export default {
       ev.dataTransfer.effectAllowed = "move";
       ev.dataTransfer.dropEffect = "move";
       ev.dataTransfer.setData("taskId", this.task.id);
-      this.dragging = true;
+
+      // DOM modifications due to changing `this.dragging`
+      // can lead to an immediate dragend event,
+      // which is why we use a setTimeout to work around that.
+      setTimeout(() => (this.dragging = true));
     },
 
     onDragEnd: function(ev) {

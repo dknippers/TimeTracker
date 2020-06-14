@@ -115,7 +115,8 @@ export default {
       ev.dataTransfer.dropEffect = "move";
       ev.dataTransfer.setData("timeslotId", this.timeslot.id);
       ev.dataTransfer.setData("taskId", this.timeslot.taskId);
-      this.dragging = true;
+
+      setTimeout(() => (this.dragging = true));
     },
 
     onDragEnd: function(ev) {
