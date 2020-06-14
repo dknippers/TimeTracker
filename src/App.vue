@@ -26,7 +26,7 @@
         v-for="task in rootTasks"
         :key="task.id"
         :task="task"
-        :emit-mouseover="emitMouseover"
+        :dragging-task="draggingTask"
         @add-task="addTask($event)"
         @remove-task-confirmation="removeTaskConfirmation($event)"
         @reset-task="resetTask($event)"
@@ -38,9 +38,8 @@
         @remove-timeslot-confirmation="removeTimeslotConfirmation($event)"
         @timeslot-to-new-task="timeslotToNewTask($event)"
         @timeslot-to-task="timeslotToTask($event)"
-        @task-dragstart="emitMouseover = true"
-        @task-dragend="emitMouseover = false"
-        @task-mouseover="taskMouseover($event)"
+        @task-dragstart="draggingTaskId = $event.taskId"
+        @task-dragend="draggingTaskId = null"
       />
     </main>
 
@@ -78,7 +77,7 @@ export default {
       // Transient state
       now: Date.now(),
       dropzone: false,
-      emitMouseover: false,
+      draggingTaskId: null,
 
       confirmation: {
         ok: null,
@@ -170,6 +169,15 @@ export default {
 
     absoluteTotalDuration: function() {
       return Math.abs(this.totalDuration);
+    },
+
+    draggingTask: function() {
+      if (this.draggingTaskId == null) {
+        return null;
+      } else {
+        const task = this.tasksById[this.draggingTaskId];
+        return this.getComputedTask(task);
+      }
     },
   },
 

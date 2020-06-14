@@ -85,7 +85,7 @@
           :key="subTask.id"
           :task="subTask"
           :collapse="dragging"
-          :emit-mouseover="emitMouseover"
+          :dragging-task="draggingTask"
           @add-task="$emit('add-task', $event)"
           @remove-task-confirmation="$emit('remove-task-confirmation', $event)"
           @reset-task="$emit('reset-task', $event)"
@@ -99,7 +99,6 @@
           @timeslot-to-task="$emit('timeslot-to-task', $event)"
           @task-dragstart="$emit('task-dragstart', $event)"
           @task-dragend="$emit('task-dragend', $event)"
-          @task-mouseover="$emit('task-mouseover', $event)"
           @go="
             stop = false;
             $emit('go');
@@ -111,6 +110,8 @@
           "
         />
       </div>
+
+      <Task v-if="draggingTask != null && dropzone" :task="draggingTask" />
     </div>
   </div>
 </template>
@@ -127,7 +128,7 @@ export default {
     task: Object,
     parentId: Number,
     collapse: Boolean,
-    emitMouseover: Boolean,
+    draggingTask: Object,
   },
 
   mounted: function() {
@@ -140,7 +141,7 @@ export default {
     const right = el.querySelector(".right");
     right.addEventListener("mousedown", e => {
       this.dragging = true;
-      this.$emit("task-dragstart");
+      this.$emit("task-dragstart", { taskId: this.task.id });
 
       const bcr = el.getBoundingClientRect();
       this.mousePos.x = e.clientX - bcr.left;
@@ -202,11 +203,11 @@ export default {
   },
 
   watch: {
-    emitMouseover: function(value, oldValue) {
-      if (value && !oldValue) {
+    draggingTask: function(value, oldValue) {
+      if (value != null && oldValue == null) {
         document.addEventListener("mousemove", this.onMouseMove);
         document.addEventListener("dropTask", this.onDropTask);
-      } else if (!value && oldValue) {
+      } else if (value == null && oldValue != null) {
         document.removeEventListener("mousemove", this.onMouseMove);
         document.removeEventListener("dropTask", this.onDropTask);
 
