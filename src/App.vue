@@ -271,7 +271,7 @@ export default {
         }
 
         if (this.isAncestor(task, parent)) {
-          // A task cannot be moved to it's descendant,
+          // A task cannot be moved to its descendant,
           // that can create a cycle
           return;
         }
@@ -332,12 +332,13 @@ export default {
       this.dropzone = false;
     },
 
-    updateTask: function(id, updateFn, doneFn) {
-      const currentTask = this.tasksById[id];
-      updateFn(currentTask);
-      if (typeof doneFn === "function") {
-        doneFn();
+    updateTask: function(id, updateFn) {
+      const task = this.tasksById[id];
+      if (task == null) {
+        return;
       }
+
+      updateFn(task);
     },
 
     updateTimeslot: function(id, updateFn, doneFn) {
@@ -430,22 +431,12 @@ export default {
       });
     },
 
-    showConfirmation: function(opts) {
-      Vue.set(this.confirmation, "text", opts.text);
-      Vue.set(this.confirmation, "ok", opts.ok);
-      Vue.set(this.confirmation, "always", opts.always);
-      Vue.set(this.confirmation, "cancel", opts.cancel);
-      Vue.set(this.confirmation, "posY", opts.posY);
-      Vue.set(this.confirmation, "okText", opts.okText || "Yes");
-      Vue.set(this.confirmation, "cancelText", opts.cancelText || "No");
+    showConfirmation: function({ text, ok, always, cancel, posY, okText = "Yes", cancelText = "No" }) {
+      Object.assign(this.confirmation, { text, ok, always, cancel, posY, okText, cancelText });
     },
 
     clearConfirmation: function() {
-      this.confirmation.ok = null;
-      this.confirmation.cancel = null;
-      this.confirmation.always = null;
-      this.confirmation.text = null;
-      this.confirmation.posY = null;
+      Object.keys(this.confirmation).forEach(key => (this.confirmation[key] = null));
     },
 
     createTimeslot: function(taskId) {
