@@ -270,8 +270,7 @@ export default {
     },
 
     moveTask: function(opts) {
-      var taskId = opts.taskId;
-      var parentId = opts.parentId;
+      const { taskId, parentId } = opts;
 
       if (taskId != null && parentId != null && taskId !== parentId) {
         const task = this.tasksById[taskId];
