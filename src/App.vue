@@ -27,14 +27,14 @@
         :key="task.id"
         :task="task"
         @add-task="addTask($event)"
-        @remove-task="askToRemoveTask($event)"
+        @remove-task-confirmation="removeTaskConfirmation($event)"
         @reset-task="resetTask($event)"
         @start-task="startTask($event)"
         @stop-task="stopTask($event)"
         @move-task="moveTask($event)"
         @change-timeslot-begin="changeTimeslotBegin($event)"
         @change-timeslot-end="changeTimeslotEnd($event)"
-        @remove-timeslot="askToRemoveTimeslot($event)"
+        @remove-timeslot-confirmation="removeTimeslotConfirmation($event)"
         @timeslot-to-new-task="timeslotToNewTask($event)"
         @timeslot-to-task="timeslotToTask($event)"
       />
@@ -397,6 +397,11 @@ export default {
     },
 
     removeTask: function(id) {
+      if (!this.tasksById[id]) {
+        // Does not exist
+        return;
+      }
+
       Vue.delete(this.tasksById, id);
 
       const subTasks = this.subTasks[id];
@@ -418,7 +423,7 @@ export default {
       }
     },
 
-    askToRemoveTask: function(evt) {
+    removeTaskConfirmation: function(evt) {
       const taskId = evt.taskId;
 
       const task = this.tasksById[taskId];
@@ -474,7 +479,7 @@ export default {
       Vue.delete(this.timeslotsById, id);
     },
 
-    askToRemoveTimeslot: function(evt) {
+    removeTimeslotConfirmation: function(evt) {
       const timeslotId = evt.timeslotId;
       const timeslot = this.timeslotsById[timeslotId];
       if (timeslot == null) {

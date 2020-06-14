@@ -7,7 +7,7 @@
       <span
         class="timeslot-control timeslot-remove"
         title="Remove"
-        @click="$emit('remove-timeslot', { timeslotId: timeslot.id, posY: $event.clientY })"
+        @click="$emit('remove-timeslot-confirmation', { timeslotId: timeslot.id, posY: $event.clientY })"
       >
         <i class="fas fa-trash-alt"></i>
       </span>

@@ -30,7 +30,11 @@
           <i v-if="collapsed" class="fas fa-caret-down"></i>
           <i v-if="!collapsed" class="fas fa-caret-up"></i>
         </button>
-        <button type="button" title="Remove" @click="$emit('remove-task', { taskId: task.id, posY: $event.clientY })">
+        <button
+          type="button"
+          title="Remove"
+          @click="$emit('remove-task-confirmation', { taskId: task.id, posY: $event.clientY })"
+        >
           <i class="fas fa-trash-alt"></i>
         </button>
       </div>
@@ -68,7 +72,7 @@
           :task="task"
           @change-timeslot-begin="$emit('change-timeslot-begin', $event)"
           @change-timeslot-end="$emit('change-timeslot-end', $event)"
-          @remove-timeslot="$emit('remove-timeslot', $event)"
+          @remove-timeslot-confirmation="$emit('remove-timeslot-confirmation', $event)"
           @timeslot-to-new-task="$emit('timeslot-to-new-task', $event)"
           @timeslot-to-task="$emit('timeslot-to-task', $event)"
         />
@@ -81,14 +85,14 @@
           :task="subTask"
           :collapse="dragging"
           @add-task="$emit('add-task', $event)"
-          @remove-task="$emit('remove-task', $event)"
+          @remove-task-confirmation="$emit('remove-task-confirmation', $event)"
           @reset-task="$emit('reset-task', $event)"
           @start-task="$emit('start-task', $event)"
           @stop-task="$emit('stop-task', $event)"
           @move-task="$emit('move-task', $event)"
           @change-timeslot-begin="$emit('change-timeslot-begin', $event)"
           @change-timeslot-end="$emit('change-timeslot-end', $event)"
-          @remove-timeslot="$emit('remove-timeslot', $event)"
+          @remove-timeslot-confirmation="$emit('remove-timeslot-confirmation', $event)"
           @timeslot-to-new-task="$emit('timeslot-to-new-task', $event)"
           @timeslot-to-task="$emit('timeslot-to-task', $event)"
         />
