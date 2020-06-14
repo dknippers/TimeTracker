@@ -7,7 +7,7 @@
       dropzone: dropzone,
       dragging: dragging,
       subtask: task.parentId != null,
-      collapsed: collapsed || collapse,
+      collapsed: collapsed,
     }"
   >
     <div class="task-head" draggable="true">
@@ -84,7 +84,6 @@
           v-for="subTask in task.subTasks"
           :key="subTask.id"
           :task="subTask"
-          :collapse="dragging"
           @add-task="$emit('add-task', $event)"
           @remove-task-confirmation="$emit('remove-task-confirmation', $event)"
           @reset-task="$emit('reset-task', $event)"
@@ -112,7 +111,6 @@ export default {
   props: {
     task: Object,
     parentId: Number,
-    collapse: Boolean,
   },
 
   mounted: function() {
