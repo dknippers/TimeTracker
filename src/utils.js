@@ -6,7 +6,6 @@ export {
   sort,
   zeropad,
   pad,
-  keyedObjectToArray,
   formatDuration,
   formatTimestamp,
   runIfFn,
@@ -125,15 +124,6 @@ function timeToTimestamp(time) {
   dt.setSeconds(0, 0);
 
   return dt.getTime();
-}
-
-function keyedObjectToArray(obj, sortOn) {
-  const array = Object.keys(obj).map(key => obj[key]);
-  if (typeof sortOn === "function") {
-    return sort(array, sortOn);
-  } else {
-    return array;
-  }
 }
 
 function formatDuration(

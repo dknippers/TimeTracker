@@ -95,12 +95,12 @@ export default {
   },
 
   computed: {
-    taskList: function() {
-      return utils.keyedObjectToArray(this.tasksById, t => t.id);
+    tasks: function() {
+      return Object.values(this.tasksById);
     },
 
     timeslots: function() {
-      return utils.keyedObjectToArray(this.timeslotsById, ts => ts.begin);
+      return Object.values(this.timeslotsById);
     },
 
     timeslotsByTask: function() {
@@ -119,18 +119,18 @@ export default {
       return timeslotsByTask;
     },
 
-    tasks: function() {
-      return this.taskList.map(this.getComputedTask);
+    computedTasks: function() {
+      return this.tasks.map(this.getComputedTask);
     },
 
     rootTasks: function() {
-      return this.tasks.filter(task => task.parentId == null);
+      return this.computedTasks.filter(task => task.parentId == null);
     },
 
     subTasks: function() {
       const subTasks = {};
 
-      for (const task of this.taskList) {
+      for (const task of this.tasks) {
         if (task.parentId != null) {
           if (subTasks[task.parentId] == null) {
             subTasks[task.parentId] = [];
@@ -144,7 +144,7 @@ export default {
     },
 
     activeTask: function() {
-      return this.tasks.find(task => task.isActive);
+      return this.computedTasks.find(task => task.isActive);
     },
 
     ancestors: function() {
@@ -152,7 +152,7 @@ export default {
 
       const cache = {};
 
-      for (const task of this.taskList) {
+      for (const task of this.tasks) {
         ancestors[task.id] = this.getAncestors(task, cache);
       }
 
@@ -189,7 +189,7 @@ export default {
     getSubTasks: function(parentTask) {
       const subTasks = [];
 
-      for (const task of this.taskList) {
+      for (const task of this.tasks) {
         if (task.parentId === parentTask.id) {
           subTasks.push(task);
         }
