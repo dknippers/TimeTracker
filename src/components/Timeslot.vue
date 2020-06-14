@@ -120,6 +120,7 @@ export default {
 
     onDragEnd: function(ev) {
       ev.preventDefault();
+      ev.stopPropagation();
       this.dragging = false;
     },
 
