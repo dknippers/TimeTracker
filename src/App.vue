@@ -669,11 +669,7 @@ main {
   }
 
   *[draggable="true"] {
-    cursor: grab;
-
-    &:active {
-      cursor: grabbing;
-    }
+    cursor: move;
   }
 
   &.loaded {
