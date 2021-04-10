@@ -55,7 +55,7 @@
       </div>
 
       <div class="right">
-        <div class="task-duration-wrapper">
+        <div class="task-duration-wrapper" v-show="task.duration > 0">
           <span
             class="task-duration"
             v-text="formatDuration(task.duration, { showZero: false, showSeconds: task.duration < 60 })"
