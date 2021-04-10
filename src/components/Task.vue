@@ -18,7 +18,7 @@
         <button type="button" title="Stop" v-if="task.isActive" @click="$emit('stop-task', task.id)">
           <i class="fas fa-stop"></i>
         </button>
-        <button type="button" class="add-subtask" title="Add subtask" @click="$emit('add-task', { parentId: task.id })">
+        <button type="button" class="add-subtask" title="Add subtask" @click="addSubTask()">
           <i class="fas fa-plus-circle"></i>
         </button>
         <button
@@ -155,6 +155,15 @@ export default {
     formatTimestamp: utils.formatTimestamp,
     formatDuration: utils.formatDuration,
 
+    addSubTask: function() {
+      if (this.collapsed) {
+        // When adding a subtask we want to expand this task
+        // so the newly added task will actually be visible
+        this.collapsed = false;
+      }
+
+      this.$emit("add-task", { parentId: this.task.id });
+    },
     onDragStart: function(ev) {
       ev.stopPropagation();
 
