@@ -179,7 +179,7 @@ export default {
 
       const cache = {};
 
-      for (const task of this.tasks) {
+      for (const task of Object.values(this.tasksById)) {
         ancestors[task.id] = this.getAncestors(task, cache);
       }
 
