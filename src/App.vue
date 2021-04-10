@@ -3,7 +3,7 @@
     <main>
       <div class="top-container">
         <div class="left">
-          <button v-if="rootTasks.length > 0" type="button" @click="clearAll($event.clientY)" class="remove-all">
+          <button v-if="mainTasks.length > 0" type="button" @click="clearAll($event.clientY)" class="remove-all">
             <i class="far fa-trash-alt"></i>
             <span class="text">remove all</span>
           </button>
@@ -23,7 +23,7 @@
       </div>
 
       <Task
-        v-for="task in rootTasks"
+        v-for="task in mainTasks"
         :key="task.id"
         :task="task"
         @add-task="addTask($event)"
@@ -96,11 +96,42 @@ export default {
 
   computed: {
     tasks: function() {
-      return Object.values(this.tasksById);
+      const computed = {};
+
+      const compute = task => {
+        if (computed[task.id] != null) {
+          return computed[task.id];
+        }
+
+        const timeslots = this.timeslotsByTask[task.id] || [];
+        const subTasks = this.getSubTasks(task).map(compute);
+
+        return (computed[task.id] = Object.assign({}, task, {
+          duration: this.getTaskDuration(task),
+          timeslots,
+          subTasks,
+          isActive: timeslots.some(timeslot => timeslot.isActive),
+          isActiveAncestor: subTasks.some(subTask => subTask.isActive || subTask.isActiveAncestor),
+
+          // Reference to source object
+          _source: task,
+        }));
+      };
+
+      return Object.values(this.tasksById).map(compute);
     },
 
     timeslots: function() {
-      return Object.values(this.timeslotsById);
+      return Object.values(this.timeslotsById).map(timeslot =>
+        Object.assign({}, timeslot, {
+          isActive: timeslot.begin != null && timeslot.end == null,
+          end: timeslot.end || this.now,
+          duration: this.getTimeslotDuration(timeslot),
+
+          // Reference to source object
+          _source: timeslot,
+        })
+      );
     },
 
     timeslotsByTask: function() {
@@ -119,18 +150,14 @@ export default {
       return timeslotsByTask;
     },
 
-    computedTasks: function() {
-      return this.tasks.map(this.getComputedTask);
-    },
-
-    rootTasks: function() {
-      return this.computedTasks.filter(task => task.parentId == null);
+    mainTasks: function() {
+      return this.tasks.filter(task => task.parentId == null);
     },
 
     subTasks: function() {
       const subTasks = {};
 
-      for (const task of this.tasks) {
+      for (const task of Object.values(this.tasksById)) {
         if (task.parentId != null) {
           if (subTasks[task.parentId] == null) {
             subTasks[task.parentId] = [];
@@ -144,7 +171,7 @@ export default {
     },
 
     activeTask: function() {
-      return this.computedTasks.find(task => task.isActive);
+      return this.tasks.find(task => task.isActive);
     },
 
     ancestors: function() {
@@ -160,7 +187,7 @@ export default {
     },
 
     totalDuration: function() {
-      return this.rootTasks.reduce((sum, task) => sum + this.getTaskDuration(task), 0);
+      return this.mainTasks.reduce((sum, task) => sum + task.duration, 0);
     },
 
     absoluteTotalDuration: function() {
@@ -169,44 +196,16 @@ export default {
   },
 
   methods: {
-    getComputedTask: function(task) {
-      const timeslots = this.timeslotsByTask[task.id] || [];
-
-      const subTasks = this.getSubTasks(task).map(this.getComputedTask);
-
-      return Object.assign({}, task, {
-        duration: this.getTaskDuration(task),
-        timeslots: timeslots.map(this.getComputedTimeslot),
-        subTasks,
-        isActive: timeslots.some(timeslot => timeslot.begin != null && timeslot.end == null),
-        isActiveAncestor: subTasks.some(subTask => subTask.isActive || subTask.isActiveAncestor),
-
-        // Reference to source object
-        _source: task,
-      });
-    },
-
     getSubTasks: function(parentTask) {
       const subTasks = [];
 
-      for (const task of this.tasks) {
+      for (const task of Object.values(this.tasksById)) {
         if (task.parentId === parentTask.id) {
           subTasks.push(task);
         }
       }
 
       return subTasks;
-    },
-
-    getComputedTimeslot: function(timeslot) {
-      return Object.assign({}, timeslot, {
-        isActive: timeslot.begin != null && timeslot.end == null,
-        end: timeslot.end || this.now,
-        duration: this.getTimeslotDuration(timeslot),
-
-        // Reference to source object
-        _source: timeslot,
-      });
     },
 
     getAncestors: function(task, cache) {
@@ -377,7 +376,7 @@ export default {
         }
 
         const timeslots = this.timeslotsByTask[id] || [];
-        const activeSlots = timeslots.filter(slot => slot.begin != null && slot.end == null);
+        const activeSlots = timeslots.filter(slot => slot.isActive).map(slot => this.timeslotsById[slot.id]);
 
         const now = Date.now();
 
@@ -472,9 +471,8 @@ export default {
       const task = this.tasksById[timeslot.taskId];
       const taskName = (task && task.name) || "<no task>";
 
-      const computed = this.getComputedTimeslot(timeslot);
-      const begin = utils.formatTimestamp(computed.begin, "???");
-      const end = utils.formatTimestamp(computed.end, "???");
+      const begin = utils.formatTimestamp(timeslot.begin, "???");
+      const end = utils.formatTimestamp(timeslot.end || this.now, "???");
 
       this.showConfirmation({
         text: `Remove ${begin} - ${end} of ${taskName}?`,
@@ -553,7 +551,7 @@ export default {
 
     getTaskDuration: function(task) {
       const timeslots = this.timeslotsByTask[task.id] || [];
-      const taskSeconds = timeslots.reduce((sum, ts) => sum + this.getTimeslotDuration(ts), 0);
+      const taskSeconds = timeslots.reduce((sum, ts) => sum + ts.duration, 0);
 
       const subTasks = this.subTasks[task.id];
       let subTasksSeconds = 0;
