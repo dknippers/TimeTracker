@@ -427,7 +427,7 @@ export default {
       const taskName = task.name || "<no name>";
 
       this.showConfirmation({
-        text: `Delete ${taskName}?`,
+        text: `Remove ${taskName}?`,
         ok: () => this.removeTask(taskId),
         always: this.clearConfirmation,
         posY: evt.posY,
