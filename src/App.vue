@@ -623,7 +623,7 @@ export default {
 
 * {
   box-sizing: border-box;
-  font-family: Calibri, sans-serif;
+  font-family: Calibri, Ubuntu, sans-serif;
 }
 
 html {
