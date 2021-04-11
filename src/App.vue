@@ -104,7 +104,7 @@ export default {
         }
 
         const timeslots = this.timeslotsByTask[task.id] || [];
-        const subTasks = this.getSubTasks(task).map(compute);
+        const subTasks = (this.tasksByParentId[task.id] || []).map(compute);
 
         return (computed[task.id] = Object.assign({}, task, {
           duration: this.getTaskDuration(task),
@@ -119,6 +119,22 @@ export default {
       };
 
       return Object.values(this.tasksById).map(compute);
+    },
+
+    tasksByParentId: function() {
+      const tasksByParentId = {};
+
+      for (const task of Object.values(this.tasksById)) {
+        if (task.parentId != null) {
+          if (tasksByParentId[task.parentId] == null) {
+            tasksByParentId[task.parentId] = [];
+          }
+
+          tasksByParentId[task.parentId].push(task);
+        }
+      }
+
+      return tasksByParentId;
     },
 
     timeslots: function() {
@@ -158,22 +174,6 @@ export default {
       return this.tasks.filter(task => task.parentId == null);
     },
 
-    subTasks: function() {
-      const subTasks = {};
-
-      for (const task of Object.values(this.tasksById)) {
-        if (task.parentId != null) {
-          if (subTasks[task.parentId] == null) {
-            subTasks[task.parentId] = [];
-          }
-
-          subTasks[task.parentId].push(task);
-        }
-      }
-
-      return subTasks;
-    },
-
     activeTask: function() {
       return this.tasks.find(task => task.isActive);
     },
@@ -200,18 +200,6 @@ export default {
   },
 
   methods: {
-    getSubTasks: function(parentTask) {
-      const subTasks = [];
-
-      for (const task of Object.values(this.tasksById)) {
-        if (task.parentId === parentTask.id) {
-          subTasks.push(task);
-        }
-      }
-
-      return subTasks;
-    },
-
     getAncestors: function(task, cache) {
       const parent = this.tasksById[task.parentId];
       if (parent == null) {
@@ -400,7 +388,7 @@ export default {
 
       Vue.delete(this.tasksById, id);
 
-      const subTasks = this.subTasks[id];
+      const subTasks = this.tasksByParentId[id];
       if (Array.isArray(subTasks)) {
         for (const subTask of subTasks) {
           this.removeTask(subTask.id);
@@ -547,7 +535,7 @@ export default {
       const timeslots = this.timeslotsByTask[task.id] || [];
       const taskSeconds = timeslots.reduce((sum, ts) => sum + ts.duration, 0);
 
-      const subTasks = this.subTasks[task.id];
+      const subTasks = this.tasksByParentId[task.id];
       let subTasksSeconds = 0;
       if (Array.isArray(subTasks)) {
         subTasksSeconds = subTasks.reduce((sum, subTask) => sum + this.getTaskDuration(subTask), 0);
