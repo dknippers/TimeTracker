@@ -535,11 +535,8 @@ export default {
       const timeslots = this.timeslotsByTask[task.id] || [];
       const taskSeconds = timeslots.reduce((sum, ts) => sum + ts.duration, 0);
 
-      const subTasks = this.tasksByParentId[task.id];
-      let subTasksSeconds = 0;
-      if (Array.isArray(subTasks)) {
-        subTasksSeconds = subTasks.reduce((sum, subTask) => sum + this.getTaskDuration(subTask), 0);
-      }
+      const subTasks = this.tasksByParentId[task.id] || [];
+      const subTasksSeconds = subTasks.reduce((sum, subTask) => sum + this.getTaskDuration(subTask), 0);
 
       return taskSeconds + subTasksSeconds;
     },
