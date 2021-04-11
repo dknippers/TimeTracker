@@ -122,16 +122,20 @@ export default {
     },
 
     timeslots: function() {
-      return Object.values(this.timeslotsById).map(timeslot =>
-        Object.assign({}, timeslot, {
-          isActive: timeslot.begin != null && timeslot.end == null,
-          end: timeslot.end || this.now,
-          duration: this.getTimeslotDuration(timeslot),
+      return Object.values(this.timeslotsById).map(timeslot => {
+        const end = timeslot.end || this.now;
+        const isActive = timeslot.begin != null && timeslot.end == null;
+        const duration = timeslot.begin == null ? 0 : Math.round((end - timeslot.begin) / 1000);
+
+        return Object.assign({}, timeslot, {
+          end,
+          isActive,
+          duration: duration,
 
           // Reference to source object
           _source: timeslot,
-        })
-      );
+        });
+      });
     },
 
     timeslotsByTask: function() {
@@ -537,16 +541,6 @@ export default {
           Vue.delete(this.timeslotsById, timeslot.id);
         }
       }
-    },
-
-    getTimeslotDuration: function(ts) {
-      if (ts == null || ts.begin == null) {
-        return 0;
-      }
-
-      const end = ts.end || this.now;
-
-      return Math.round((end - ts.begin) / 1000);
     },
 
     getTaskDuration: function(task) {
