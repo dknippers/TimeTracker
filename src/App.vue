@@ -563,7 +563,7 @@ export default {
     },
 
     updateDocumentTitle: function() {
-      if (this.activeTask == null || this.activeTask.duration == null) {
+      if (this.activeTask == null || this.activeTask.duration === 0) {
         if (document.title !== this.documentTitle) {
           document.title = this.documentTitle;
         }
@@ -574,8 +574,12 @@ export default {
         });
 
         if (duration != null) {
-          const name = this.activeTask.name || "";
-          document.title = `${duration} - ${name}`;
+          const name = this.activeTask.name;
+          if (name) {
+            document.title = `${duration} - ${name}`;
+          } else {
+            document.title = duration;
+          }
         }
       }
     },
