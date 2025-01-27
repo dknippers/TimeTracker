@@ -1,25 +1,19 @@
 # Time Tracker
 
-## Project setup
+## Project Setup
 
-```
-npm install
-```
-
-### Compiles and hot-reloads for development
-
-```
-npm run serve
+```sh
+pnpm install
 ```
 
-### Compiles and minifies for production
+### Compile and Hot-Reload for Development
 
-```
-npm run build
+```sh
+pnpm dev
 ```
 
-### Lints and fixes files
+### Compile and Minify for Production
 
-```
-npm run lint
+```sh
+pnpm build
 ```
