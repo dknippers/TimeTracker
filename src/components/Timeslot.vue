@@ -120,6 +120,108 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<style scoped>
-/* TODO */
+<style lang="less">
+.timeslot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.25em 0;
+
+  >.timeslot-controls {
+    flex: 1;
+
+    >.timeslot-control {
+      visibility: hidden;
+      color: var(--dark);
+      padding: 0.35em;
+
+      >i {
+        display: inline-block;
+      }
+
+      &.timeslot-to-task {
+        >i {
+          transform: rotate(-90deg);
+        }
+      }
+
+      &:hover {
+        cursor: pointer;
+        color: var(--purple);
+
+        &.timeslot-remove {
+          color: var(--red);
+        }
+      }
+    }
+
+    &:hover>.timeslot-control {
+      visibility: visible;
+    }
+  }
+
+  .timeslot-period {
+    flex: 1;
+    text-align: center;
+    display: flex;
+
+    .timeslot-begin {
+      flex: 4;
+      text-align: right;
+
+      >.edit-time {
+        text-align: right;
+      }
+
+      &:hover {
+        cursor: text;
+      }
+    }
+
+    .timeslot-separator {
+      flex: 1;
+    }
+
+    .timeslot-end {
+      flex: 4;
+      text-align: left;
+
+      &:hover {
+        cursor: text;
+      }
+    }
+
+    .edit-time {
+      width: 3em;
+      border: none;
+      font-size: 1em;
+      outline: none;
+      padding: 0;
+      font-weight: bold;
+    }
+  }
+
+  &.active .timeslot-end {
+    font-weight: bold;
+    color: var(--purple);
+  }
+
+  .timeslot-right {
+    flex: 1;
+    text-align: right;
+
+    .timeslot-duration {
+      font-size: 0.9em;
+      text-align: right;
+    }
+  }
+
+  &.dragging {
+    outline: var(--dragging-outline);
+
+    * {
+      opacity: 0.8;
+    }
+  }
+}
 </style>

@@ -411,6 +411,130 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<style scoped>
-/* TODO */
+<style lang="less">
+#time-tracker {
+  padding: 2rem;
+  margin: 0 auto;
+  display: none;
+  max-width: 600px;
+  color: var(--dark);
+  background-color: white;
+
+  @media screen and (min-width: 600px) {
+    margin: 1rem auto;
+    border-radius: 0.5rem;
+  }
+
+  &.loaded {
+    display: flex;
+    justify-content: center;
+  }
+
+  .top-container {
+    position: relative;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+
+    >.left,
+    >.right {
+      flex: 1;
+    }
+
+    @media screen and (max-width: 320px) {
+      >.left {
+        flex: 0;
+      }
+    }
+
+    >.center {
+      flex: 2;
+    }
+
+    .new-task {
+      box-shadow: 0 0 1px 0 lightgrey, 1px 1px 2px grey;
+      font-size: 1em;
+      padding: 0.8em 1.2em;
+      border: 1px solid var(--light);
+      width: 100%;
+
+      &:focus {
+        box-shadow: var(--focus-box-shadow);
+      }
+    }
+
+    .total-duration {
+      color: #888a85;
+      text-align: right;
+      font-size: 1em;
+      margin-left: 0.5em;
+      visibility: hidden;
+
+      &.visible {
+        visibility: visible;
+      }
+
+      >.clock {
+        margin-left: 0.25em;
+      }
+    }
+  }
+
+  .remove-all {
+    background-color: white;
+    padding: 0.5rem 0.8rem;
+
+    .text {
+      font-size: 0.9rem;
+      margin-left: 0.4rem;
+      display: none;
+    }
+
+    &:hover,
+    &:focus {
+      box-shadow: var(--focus-box-shadow);
+
+      .text {
+        display: inline;
+      }
+    }
+
+    &:active {
+      box-shadow: none;
+    }
+  }
+
+  /* Component global styles */
+  *[draggable="true"] {
+    cursor: move;
+  }
+
+  ul {
+    list-style-type: none;
+    padding: 0 0 0 1em;
+    margin: 0;
+  }
+
+  input {
+    outline: none;
+  }
+
+  &.dropzone {
+    outline: var(--dropzone-outline);
+    border-radius: 0;
+  }
+
+  button {
+    font-size: 1em;
+    padding: 0.4em 0.8em;
+    background: 0 0;
+    border: 1px solid lightgray;
+    box-shadow: 1px 1px 1px 0 lightgray;
+    outline: 0;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+}
 </style>

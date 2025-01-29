@@ -1,0 +1,35 @@
+@import "./variables.css";
+
+* {
+  box-sizing: border-box;
+  font-family: Calibri, Ubuntu, sans-serif;
+}
+
+html {
+  /* Minimum font-size (usually 12px) */
+  font-size: 75%;
+}
+
+@media screen and (min-width: 300px) {
+  html {
+    /* Dynamic font size: scale between 12px and 16px */
+    font-size: var(--dynamic-font-size);
+  }
+}
+
+@media screen and (min-width: 600px) {
+  html {
+    /* Maximum font-size (usually 16px) */
+    font-size: 100%;
+  }
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  background-color: var(--dark);
+}
+
+main {
+  flex: 1;
+}

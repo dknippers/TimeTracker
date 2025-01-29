@@ -99,6 +99,53 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<style scoped>
-/* TODO */
+<style lang="less">
+#time-tracker {
+  .confirm-dialog-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.8);
+
+    >.confirm-dialog {
+      background-color: white;
+      padding: 2em;
+      min-width: 15em;
+      border-radius: 0.2em;
+
+      >.text {
+        display: block;
+        margin-bottom: 1.5em;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      >.buttons {
+        display: flex;
+
+        >button {
+          flex: 1;
+
+          &:focus,
+          &:hover {
+            box-shadow: var(--focus-box-shadow);
+          }
+
+          &:active {
+            box-shadow: none;
+          }
+        }
+
+        >.ok {
+          margin-left: 1em;
+        }
+      }
+    }
+  }
+}
 </style>

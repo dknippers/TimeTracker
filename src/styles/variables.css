@@ -6,6 +6,9 @@
   --orange: #f57900;
 
   --dynamic-font-size: calc(12px + 4 * ((100vw - 300px) / (600 - 300)));
+  --focus-box-shadow: 1px 1px 3px 0 var(--purple);
+  --dropzone-outline: 3px solid var(--orange);
+  --dragging-outline: 3px dashed var(--purple);
 }
 
 @media (prefers-color-scheme: dark) {
