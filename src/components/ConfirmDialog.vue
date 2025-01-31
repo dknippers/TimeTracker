@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import * as utils from "../utils.js";
 
 const props = defineProps({
@@ -28,7 +28,7 @@ const cancel = () => {
   utils.runIfFn(props.config.always);
 };
 
-const onClick = (ev) => {
+const onClick = ev => {
   ev.preventDefault();
   ev.stopPropagation();
 
@@ -37,7 +37,7 @@ const onClick = (ev) => {
   }
 };
 
-const onKeyup = (ev) => {
+const onKeyup = ev => {
   if (ev.key === "Escape") {
     cancel();
   }
@@ -112,23 +112,23 @@ onBeforeUnmount(() => {
     align-items: center;
     background-color: rgba(0, 0, 0, 0.8);
 
-    >.confirm-dialog {
+    > .confirm-dialog {
       background-color: white;
       padding: 2em;
       min-width: 15em;
       border-radius: 0.2em;
 
-      >.text {
+      > .text {
         display: block;
         margin-bottom: 1.5em;
         font-weight: bold;
         text-align: center;
       }
 
-      >.buttons {
+      > .buttons {
         display: flex;
 
-        >button {
+        > button {
           flex: 1;
 
           &:focus,
@@ -141,7 +141,7 @@ onBeforeUnmount(() => {
           }
         }
 
-        >.ok {
+        > .ok {
           margin-left: 1em;
         }
       }

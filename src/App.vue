@@ -1,9 +1,9 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-import * as utils from './utils.js';
-import Task from './components/Task.vue';
-import ConfirmDialog from './components/ConfirmDialog.vue';
-import debounce from 'lodash/debounce';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import * as utils from "./utils.js";
+import Task from "./components/Task.vue";
+import ConfirmDialog from "./components/ConfirmDialog.vue";
+import debounce from "lodash/debounce";
 
 const initialId = 1;
 
@@ -26,7 +26,7 @@ const confirmation = ref({
 });
 
 // Load persisted state
-const savedState = utils.getFromStorage('time-tracker');
+const savedState = utils.getFromStorage("time-tracker");
 if (savedState != null) {
   nextId.value = savedState.nextId;
   tasksById.value = savedState.tasksById;
@@ -115,12 +115,12 @@ const isAncestor = (taskA, taskB) => getAncestors(taskB).indexOf(taskA) > -1;
 
 const save = () => {
   const toSave = { nextId: nextId.value, tasksById: tasksById.value, timeslotsById: timeslotsById.value };
-  utils.saveToStorage('time-tracker', toSave);
+  utils.saveToStorage("time-tracker", toSave);
 };
 
-const inputTask = (inputElement) => {
+const inputTask = inputElement => {
   addTask({ name: inputElement.value });
-  inputElement.value = '';
+  inputElement.value = "";
 };
 
 const addTask = ({ name, parentId }) => {
@@ -149,8 +149,8 @@ const moveTask = ({ taskId, parentId }) => {
   }
 };
 
-const changeTimeslotBegin = (args) => changeTimeslotTimestamp(args, 'begin');
-const changeTimeslotEnd = (args) => changeTimeslotTimestamp(args, 'end');
+const changeTimeslotBegin = args => changeTimeslotTimestamp(args, "begin");
+const changeTimeslotEnd = args => changeTimeslotTimestamp(args, "end");
 
 const changeTimeslotTimestamp = ({ timeslotId, timestamp }, property) => {
   const timeslot = timeslotsById.value[timeslotId];
@@ -159,9 +159,9 @@ const changeTimeslotTimestamp = ({ timeslotId, timestamp }, property) => {
   }
 };
 
-const onDrop = (ev) => {
+const onDrop = ev => {
   dropzone.value = false;
-  const taskId = ev.dataTransfer.getData('taskId');
+  const taskId = ev.dataTransfer.getData("taskId");
   if (!taskId) {
     return;
   }
@@ -171,20 +171,20 @@ const onDrop = (ev) => {
   }
 };
 
-const onDragOver = (ev) => {
+const onDragOver = ev => {
   ev.preventDefault();
-  const isTimeslot = ev.dataTransfer.types.indexOf('timeslotid') > -1;
+  const isTimeslot = ev.dataTransfer.types.indexOf("timeslotid") > -1;
   if (!isTimeslot) {
     dropzone.value = true;
   }
 };
 
-const onDragLeave = (ev) => {
+const onDragLeave = ev => {
   ev.preventDefault();
   dropzone.value = false;
 };
 
-const startTask = (id) => {
+const startTask = id => {
   const oldTask = activeTask.value;
   if (oldTask && oldTask.id !== id) {
     stopTask(oldTask.id);
@@ -192,7 +192,7 @@ const startTask = (id) => {
   createTimeslot(id);
 };
 
-const stopTask = (id) => {
+const stopTask = id => {
   const task = tasksById.value[id];
   if (task == null) {
     return;
@@ -205,7 +205,7 @@ const stopTask = (id) => {
   }
 };
 
-const removeTask = (id) => {
+const removeTask = id => {
   if (!tasksById.value[id]) {
     return;
   }
@@ -227,13 +227,13 @@ const removeTask = (id) => {
   }
 };
 
-const removeTaskConfirmation = (evt) => {
+const removeTaskConfirmation = evt => {
   const taskId = evt.taskId;
   const task = tasksById.value[taskId];
   if (task == null) {
     return;
   }
-  const taskName = task.name || '<no name>';
+  const taskName = task.name || "<no name>";
   showConfirmation({
     text: `Remove ${taskName}?`,
     ok: () => removeTask(taskId),
@@ -242,7 +242,7 @@ const removeTaskConfirmation = (evt) => {
   });
 };
 
-const showConfirmation = ({ text, ok, always, cancel, posY, okText = 'Yes', cancelText = 'No' }) => {
+const showConfirmation = ({ text, ok, always, cancel, posY, okText = "Yes", cancelText = "No" }) => {
   confirmation.value = { text, ok, always, cancel, posY, okText, cancelText };
 };
 
@@ -250,27 +250,27 @@ const clearConfirmation = () => {
   Object.keys(confirmation.value).forEach(key => (confirmation.value[key] = null));
 };
 
-const createTimeslot = (taskId) => {
+const createTimeslot = taskId => {
   const id = nextId.value++;
   const timeslot = { id, taskId, begin: now.value };
   timeslotsById.value[id] = timeslot;
   return timeslot;
 };
 
-const removeTimeslot = (id) => {
+const removeTimeslot = id => {
   delete timeslotsById.value[id];
 };
 
-const removeTimeslotConfirmation = (evt) => {
+const removeTimeslotConfirmation = evt => {
   const timeslotId = evt.timeslotId;
   const timeslot = timeslotsById.value[timeslotId];
   if (timeslot == null) {
     return;
   }
   const task = tasksById.value[timeslot.taskId];
-  const taskName = (task && task.name) || '<no task>';
-  const begin = utils.formatTimestamp(timeslot.begin, '???');
-  const end = utils.formatTimestamp(timeslot.end || now.value, '???');
+  const taskName = (task && task.name) || "<no task>";
+  const begin = utils.formatTimestamp(timeslot.begin, "???");
+  const end = utils.formatTimestamp(timeslot.end || now.value, "???");
   showConfirmation({
     text: `Remove ${begin} - ${end} of ${taskName}?`,
     ok: () => removeTimeslot(timeslotId),
@@ -279,7 +279,7 @@ const removeTimeslotConfirmation = (evt) => {
   });
 };
 
-const timeslotToNewTask = (id) => {
+const timeslotToNewTask = id => {
   const timeslot = timeslotsById.value[id];
   if (timeslot == null) {
     return;
@@ -298,25 +298,25 @@ const timeslotToTask = ({ id, taskId }) => {
   }
 };
 
-const clearAll = (posY) => {
+const clearAll = posY => {
   const remove = () => {
     nextId.value = initialId;
     tasksById.value = {};
     timeslotsById.value = {};
   };
   showConfirmation({
-    text: 'Remove all tasks?',
+    text: "Remove all tasks?",
     ok: remove,
     always: clearConfirmation,
     posY: posY,
   });
 };
 
-const resetTask = (id) => {
+const resetTask = id => {
   clearTimeslots(id);
 };
 
-const clearTimeslots = (taskId) => {
+const clearTimeslots = taskId => {
   const timeslots = timeslotsByTask.value[taskId];
   if (Array.isArray(timeslots)) {
     for (const timeslot of timeslots) {
@@ -325,7 +325,7 @@ const clearTimeslots = (taskId) => {
   }
 };
 
-const getTaskDuration = (task) => {
+const getTaskDuration = task => {
   const timeslots = timeslotsByTask.value[task.id] || [];
   const taskSeconds = timeslots.reduce((sum, ts) => sum + ts.duration, 0);
   const subTasks = tasksByParentId.value[task.id] || [];
@@ -350,7 +350,7 @@ const setNow = () => {
   now.value = Date.now();
 };
 
-const mainLoop = (timeout) => {
+const mainLoop = timeout => {
   setNow();
   updateDocumentTitle();
   setTimeout(() => mainLoop(timeout), timeout);
@@ -361,9 +361,9 @@ onMounted(() => {
   documentTitle.value = document.title;
   mainLoop(1000);
 
-  el.value.addEventListener('drop', onDrop);
-  el.value.addEventListener('dragover', onDragOver);
-  el.value.addEventListener('dragleave', onDragLeave);
+  el.value.addEventListener("drop", onDrop);
+  el.value.addEventListener("dragover", onDragOver);
+  el.value.addEventListener("dragleave", onDragLeave);
 
   const debouncedSave = debounce(save, 250);
   watch(tasksById, debouncedSave, { deep: true });
@@ -371,9 +371,9 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  el.value.removeEventListener('drop', onDrop);
-  el.value.removeEventListener('dragover', onDragOver);
-  el.value.removeEventListener('dragleave', onDragLeave);
+  el.value.removeEventListener("drop", onDrop);
+  el.value.removeEventListener("dragover", onDragOver);
+  el.value.removeEventListener("dragleave", onDragLeave);
 });
 </script>
 
@@ -393,18 +393,30 @@ onBeforeUnmount(() => {
         <div class="right">
           <div class="total-duration" :class="{ visible: absoluteTotalDuration > 0 }">
             <i class="far fa-clock"></i>
-            <span class="clock"
-              v-text="utils.formatDuration(totalDuration, { showSeconds: absoluteTotalDuration < 60 })"></span>
+            <span
+              class="clock"
+              v-text="utils.formatDuration(totalDuration, { showSeconds: absoluteTotalDuration < 60 })"
+            ></span>
           </div>
         </div>
       </div>
 
-      <Task v-for="task in mainTasks" :key="task.id" :task="task" @add-task="addTask($event)"
-        @remove-task-confirmation="removeTaskConfirmation($event)" @reset-task="resetTask($event)"
-        @start-task="startTask($event)" @stop-task="stopTask($event)" @move-task="moveTask($event)"
-        @change-timeslot-begin="changeTimeslotBegin($event)" @change-timeslot-end="changeTimeslotEnd($event)"
+      <Task
+        v-for="task in mainTasks"
+        :key="task.id"
+        :task="task"
+        @add-task="addTask($event)"
+        @remove-task-confirmation="removeTaskConfirmation($event)"
+        @reset-task="resetTask($event)"
+        @start-task="startTask($event)"
+        @stop-task="stopTask($event)"
+        @move-task="moveTask($event)"
+        @change-timeslot-begin="changeTimeslotBegin($event)"
+        @change-timeslot-end="changeTimeslotEnd($event)"
         @remove-timeslot-confirmation="removeTimeslotConfirmation($event)"
-        @timeslot-to-new-task="timeslotToNewTask($event)" @timeslot-to-task="timeslotToTask($event)" />
+        @timeslot-to-new-task="timeslotToNewTask($event)"
+        @timeslot-to-task="timeslotToTask($event)"
+      />
     </main>
 
     <ConfirmDialog v-if="confirmation.ok" :config="confirmation" />
@@ -436,18 +448,18 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
 
-    >.left,
-    >.right {
+    > .left,
+    > .right {
       flex: 1;
     }
 
     @media screen and (max-width: 320px) {
-      >.left {
+      > .left {
         flex: 0;
       }
     }
 
-    >.center {
+    > .center {
       flex: 2;
     }
 
@@ -474,7 +486,7 @@ onBeforeUnmount(() => {
         visibility: visible;
       }
 
-      >.clock {
+      > .clock {
         margin-left: 0.25em;
       }
     }
