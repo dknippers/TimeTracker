@@ -4,6 +4,7 @@ import * as utils from "./utils.js";
 import Task from "./components/Task.vue";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
 import debounce from "lodash/debounce";
+import { min } from "lodash";
 
 const initialId = 1;
 
@@ -75,11 +76,13 @@ const tasks = computed(() => {
     if (computedTasks[task.id] != null) {
       return computedTasks[task.id];
     }
-    const timeslots = timeslotsByTask.value[task.id] || [];
-    const subTasks = (tasksByParentId.value[task.id] || []).map(compute);
+    const timeslots = utils.sort(timeslotsByTask.value[task.id] || [], ts => ts.begin);
+    const subTasks = utils.sort((tasksByParentId.value[task.id] || []).map(compute), st => st.begin);
+
     return (computedTasks[task.id] = {
       ...task,
       duration: getTaskDuration(task),
+      begin: min([...timeslots.map(ts => ts.begin), ...subTasks.map(st => st.begin)]),
       timeslots,
       subTasks,
       isActive: timeslots.some(timeslot => timeslot.isActive),
@@ -90,7 +93,13 @@ const tasks = computed(() => {
   return Object.values(tasksById.value).map(compute);
 });
 
-const mainTasks = computed(() => tasks.value.filter(task => task.parentId == null));
+const mainTasks = computed(() => {
+  return utils.sort(
+    tasks.value.filter(task => task.parentId == null),
+    t => t.begin
+  );
+});
+
 const activeTask = computed(() => tasks.value.find(task => task.isActive));
 const totalDuration = computed(() => mainTasks.value.reduce((sum, task) => sum + task.duration, 0));
 const absoluteTotalDuration = computed(() => Math.abs(totalDuration.value));

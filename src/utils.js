@@ -164,7 +164,7 @@ function formatTimestamp(timestamp, outputIfInvalid) {
 }
 
 function sort(array, selector) {
-  return array.sort((a, b) => {
+  return array.toSorted((a, b) => {
     const vA = selector(a);
     const vB = selector(b);
     return vA > vB ? 1 : vB > vA ? -1 : 0;
