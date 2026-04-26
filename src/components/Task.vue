@@ -1,8 +1,11 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, inject } from "vue";
 import * as utils from "../utils.js";
 import vFocus from "@/directives/v-focus.js";
 import Timeslot from "./Timeslot.vue";
+import Icon from "./Icon.vue";
+
+const now = inject("now");
 
 // Props
 const props = defineProps({
@@ -36,6 +39,8 @@ const dragging = ref(false);
 const editName = ref(false);
 const collapsed = ref(false);
 const el = ref(null);
+
+const duration = computed(() => utils.computeTaskDuration(props.task, now.value));
 
 // Methods
 const formatDuration = utils.formatDuration;
@@ -126,6 +131,8 @@ const cancelEdit = () => {
 };
 
 // Lifecycle hooks
+let clickTimeout;
+
 onMounted(() => {
   el.value.addEventListener("dragstart", onDragStart);
   el.value.addEventListener("dragend", onDragEnd);
@@ -137,7 +144,7 @@ onMounted(() => {
     editName.value = true;
   }
 
-  setTimeout(() => document.addEventListener("click", onClick));
+  clickTimeout = setTimeout(() => document.addEventListener("click", onClick));
 });
 
 onBeforeUnmount(() => {
@@ -147,6 +154,7 @@ onBeforeUnmount(() => {
   el.value.removeEventListener("dragleave", onDragLeave);
   el.value.removeEventListener("drop", onDrop);
 
+  clearTimeout(clickTimeout);
   document.removeEventListener("click", onClick);
 });
 </script>
@@ -167,13 +175,13 @@ onBeforeUnmount(() => {
     <div class="task-head" draggable="true">
       <div class="left">
         <button type="button" title="Start" v-if="!task.isActive" @click="$emit('start-task', task.id)">
-          <i class="fas fa-play"></i>
+          <Icon name="fa-play" />
         </button>
         <button type="button" title="Stop" v-if="task.isActive" @click="$emit('stop-task', task.id)">
-          <i class="fas fa-stop"></i>
+          <Icon name="fa-stop" />
         </button>
         <button type="button" class="add-subtask" title="Add subtask" @click="addSubTask()">
-          <i class="fas fa-plus-circle"></i>
+          <Icon name="fa-plus-circle" />
         </button>
         <button
           type="button"
@@ -182,15 +190,15 @@ onBeforeUnmount(() => {
           :title="collapsed ? 'Expand' : 'Collapse'"
           @click="collapsed = !collapsed"
         >
-          <i v-if="collapsed" class="fas fa-caret-down"></i>
-          <i v-if="!collapsed" class="fas fa-caret-up"></i>
+          <Icon v-if="collapsed" name="fa-caret-down" />
+          <Icon v-if="!collapsed" name="fa-caret-up" />
         </button>
         <button
           type="button"
           title="Remove"
           @click="$emit('remove-task-confirmation', { taskId: task.id, posY: $event.clientY })"
         >
-          <i class="fas fa-trash-alt"></i>
+          <Icon name="fa-trash-alt-solid" />
         </button>
       </div>
 
@@ -209,10 +217,10 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="right">
-        <div class="task-duration-wrapper" v-show="task.duration > 0">
+        <div class="task-duration-wrapper" v-show="duration > 0">
           <span
             class="task-duration"
-            v-text="formatDuration(task.duration, { showZero: false, showSeconds: task.duration < 60 })"
+            v-text="formatDuration(duration, { showZero: false, showSeconds: duration < 60 })"
           ></span>
         </div>
       </div>
@@ -223,6 +231,7 @@ onBeforeUnmount(() => {
         <Timeslot
           v-for="timeslot in task.timeslots"
           :key="timeslot.id"
+          v-memo="[timeslot.id, timeslot.begin, timeslot.end, timeslot.taskId]"
           :timeslot="timeslot"
           :task="task"
           @change-timeslot-begin="$emit('change-timeslot-begin', $event)"

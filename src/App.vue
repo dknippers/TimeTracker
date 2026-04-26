@@ -1,10 +1,9 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch, provide } from "vue";
 import * as utils from "./utils.js";
 import Task from "./components/Task.vue";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
-import debounce from "lodash/debounce";
-import { min } from "lodash";
+import Icon from "./components/Icon.vue";
 
 const initialId = 1;
 
@@ -14,6 +13,8 @@ const nextId = ref(initialId);
 const tasksById = ref({});
 const timeslotsById = ref({});
 const now = ref(Date.now());
+provide("now", now);
+
 const dropzone = ref(false);
 const documentTitle = ref(null);
 const confirmation = ref({
@@ -49,12 +50,11 @@ const tasksByParentId = computed(() => {
 });
 
 const timeslots = computed(() => {
-  return Object.values(timeslotsById.value).map(timeslot => {
-    const end = timeslot.end || now.value;
-    const isActive = timeslot.begin != null && timeslot.end == null;
-    const duration = timeslot.begin == null ? 0 : Math.round((end - timeslot.begin) / 1000);
-    return { ...timeslot, end, isActive, duration, _source: timeslot };
-  });
+  return Object.values(timeslotsById.value).map(timeslot => ({
+    ...timeslot,
+    isActive: timeslot.begin != null && timeslot.end == null,
+    _source: timeslot,
+  }));
 });
 
 const timeslotsByTask = computed(() => {
@@ -79,10 +79,12 @@ const tasks = computed(() => {
     const timeslots = utils.sort(timeslotsByTask.value[task.id] || [], ts => ts.begin);
     const subTasks = utils.sort((tasksByParentId.value[task.id] || []).map(compute), st => st.begin);
 
+    const begins = [...timeslots.map(ts => ts.begin), ...subTasks.map(st => st.begin)].filter(v => v != null);
+    const begin = begins.length ? Math.min(...begins) : undefined;
+
     return (computedTasks[task.id] = {
       ...task,
-      duration: getTaskDuration(task),
-      begin: min([...timeslots.map(ts => ts.begin), ...subTasks.map(st => st.begin)]),
+      begin,
       timeslots,
       subTasks,
       isActive: timeslots.some(timeslot => timeslot.isActive),
@@ -101,7 +103,10 @@ const mainTasks = computed(() => {
 });
 
 const activeTask = computed(() => tasks.value.find(task => task.isActive));
-const totalDuration = computed(() => mainTasks.value.reduce((sum, task) => sum + task.duration, 0));
+const totalDuration = computed(() => {
+  const currentNow = now.value;
+  return mainTasks.value.reduce((sum, task) => sum + utils.computeTaskDuration(task, currentNow), 0);
+});
 const absoluteTotalDuration = computed(() => Math.abs(totalDuration.value));
 
 // Methods
@@ -202,15 +207,11 @@ const startTask = id => {
 };
 
 const stopTask = id => {
-  const task = tasksById.value[id];
-  if (task == null) {
-    return;
-  }
-  const timeslots = timeslotsByTask.value[id] || [];
-  const activeSlots = timeslots.filter(slot => slot.isActive).map(slot => timeslotsById.value[slot.id]);
   const currentTime = Date.now();
-  for (const activeSlot of activeSlots) {
-    activeSlot.end = currentTime;
+  for (const timeslot of Object.values(timeslotsById.value)) {
+    if (timeslot.taskId === id && timeslot.begin != null && timeslot.end == null) {
+      timeslot.end = currentTime;
+    }
   }
 };
 
@@ -326,33 +327,31 @@ const resetTask = id => {
 };
 
 const clearTimeslots = taskId => {
-  const timeslots = timeslotsByTask.value[taskId];
-  if (Array.isArray(timeslots)) {
-    for (const timeslot of timeslots) {
-      delete timeslotsById.value[timeslot.id];
+  for (const [id, timeslot] of Object.entries(timeslotsById.value)) {
+    if (timeslot.taskId === taskId) {
+      delete timeslotsById.value[id];
     }
   }
 };
 
-const getTaskDuration = task => {
-  const timeslots = timeslotsByTask.value[task.id] || [];
-  const taskSeconds = timeslots.reduce((sum, ts) => sum + ts.duration, 0);
-  const subTasks = tasksByParentId.value[task.id] || [];
-  const subTasksSeconds = subTasks.reduce((sum, subTask) => sum + getTaskDuration(subTask), 0);
-  return taskSeconds + subTasksSeconds;
-};
+const getTaskDuration = (task, currentNow = now.value) => utils.computeTaskDuration(task, currentNow);
 
 const updateDocumentTitle = () => {
-  if (activeTask.value == null || activeTask.value.duration === 0) {
+  const active = activeTask.value;
+  if (active == null) {
     document.title = documentTitle.value;
-  } else {
-    const duration = utils.formatDuration(activeTask.value.duration, {
-      showZero: false,
-      showSeconds: Math.abs(activeTask.value.duration) < 60,
-    });
-    const name = activeTask.value.name;
-    document.title = name ? `${duration} - ${name}` : duration;
+    return;
   }
+  const duration = utils.computeTaskDuration(active, now.value);
+  if (duration === 0) {
+    document.title = documentTitle.value;
+    return;
+  }
+  const formatted = utils.formatDuration(duration, {
+    showZero: false,
+    showSeconds: Math.abs(duration) < 60,
+  });
+  document.title = active.name ? `${formatted} - ${active.name}` : formatted;
 };
 
 const setNow = () => {
@@ -374,9 +373,12 @@ onMounted(() => {
   el.value.addEventListener("dragover", onDragOver);
   el.value.addEventListener("dragleave", onDragLeave);
 
-  const debouncedSave = debounce(save, 250);
-  watch(tasksById, debouncedSave, { deep: true });
-  watch(timeslotsById, debouncedSave, { deep: true });
+  const debouncedSave = utils.debounce(save, 250);
+  watch(
+    () => ({ tasksById: tasksById.value, timeslotsById: timeslotsById.value }),
+    debouncedSave,
+    { deep: true }
+  );
 });
 
 onBeforeUnmount(() => {
@@ -392,7 +394,7 @@ onBeforeUnmount(() => {
       <div class="top-container">
         <div class="left">
           <button v-if="mainTasks.length > 0" type="button" @click="clearAll($event.clientY)" class="remove-all">
-            <i class="far fa-trash-alt"></i>
+            <Icon name="fa-trash-alt-regular" />
             <span class="text">remove all</span>
           </button>
         </div>
@@ -401,7 +403,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="right">
           <div class="total-duration" :class="{ visible: absoluteTotalDuration > 0 }">
-            <i class="far fa-clock"></i>
+            <Icon name="fa-clock" />
             <span
               class="clock"
               v-text="utils.formatDuration(totalDuration, { showSeconds: absoluteTotalDuration < 60 })"

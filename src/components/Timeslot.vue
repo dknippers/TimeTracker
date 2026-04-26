@@ -1,7 +1,10 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, inject } from "vue";
 import vFocus from "@/directives/v-focus.js";
 import * as utils from "../utils.js";
+import Icon from "./Icon.vue";
+
+const now = inject("now");
 
 // Props
 const props = defineProps({
@@ -28,6 +31,14 @@ const begin = ref(null);
 const end = ref(null);
 const dragging = ref(false);
 const el = ref(null);
+
+const displayEnd = computed(() => props.timeslot.end || now.value);
+
+const duration = computed(() => {
+  const ts = props.timeslot;
+  if (ts.begin == null) return 0;
+  return Math.round((displayEnd.value - ts.begin) / 1000);
+});
 
 // Methods
 const formatTimestamp = utils.formatTimestamp;
@@ -91,14 +102,14 @@ onBeforeUnmount(() => {
   <div class="timeslot" draggable="true" ref="el" :class="{ active: timeslot.isActive, dragging: dragging }">
     <span class="timeslot-controls">
       <span class="timeslot-control" title="Move to new subtask" @click="$emit('timeslot-to-new-task', timeslot.id)">
-        <i class="far fa-window-maximize"></i>
+        <Icon name="fa-window-maximize" />
       </span>
       <span
         class="timeslot-control timeslot-remove"
         title="Remove"
         @click="$emit('remove-timeslot-confirmation', { timeslotId: timeslot.id, posY: $event.clientY })"
       >
-        <i class="fas fa-trash-alt"></i>
+        <Icon name="fa-trash-alt-solid" />
       </span>
     </span>
 
@@ -127,8 +138,8 @@ onBeforeUnmount(() => {
       <span class="timeslot-end">
         <span
           v-if="end == null"
-          v-text="formatTimestamp(timeslot.end, '???')"
-          @click="end = formatTimestamp(timeslot.end, '???')"
+          v-text="formatTimestamp(displayEnd, '???')"
+          @click="end = formatTimestamp(displayEnd, '???')"
         ></span>
         <input
           type="text"
@@ -143,7 +154,7 @@ onBeforeUnmount(() => {
     </span>
 
     <span class="timeslot-right">
-      <span class="timeslot-duration" v-text="formatDuration(timeslot.duration, { showZero: false })"></span>
+      <span class="timeslot-duration" v-text="formatDuration(duration, { showZero: false })"></span>
     </span>
   </div>
 </template>

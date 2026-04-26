@@ -9,6 +9,8 @@ const props = defineProps({
   },
 });
 
+const wrapperRef = ref(null);
+const dialogRef = ref(null);
 const minMarginPercentage = ref(0.02);
 
 const getViewport = () => ({
@@ -44,52 +46,47 @@ const onKeyup = ev => {
 };
 
 onMounted(() => {
-  const dialogWrapper = document.querySelector(".confirm-dialog-wrapper");
-  if (dialogWrapper) {
-    dialogWrapper.addEventListener("click", onClick);
+  if (wrapperRef.value) {
+    wrapperRef.value.addEventListener("click", onClick);
   }
   document.addEventListener("keyup", onKeyup);
 
-  if (props.config.posY != null) {
-    const dialog = dialogWrapper.querySelector(".confirm-dialog");
-    if (dialog) {
-      const viewport = getViewport();
-      const minMargin = minMarginPercentage.value * viewport.height;
-      const dialogRect = dialog.getBoundingClientRect();
+  if (props.config.posY != null && dialogRef.value) {
+    const viewport = getViewport();
+    const minMargin = minMarginPercentage.value * viewport.height;
+    const dialogRect = dialogRef.value.getBoundingClientRect();
 
-      const rearrangeable = dialogRect.height + 2 * minMargin < viewport.height;
+    const rearrangeable = dialogRect.height + 2 * minMargin < viewport.height;
 
-      let top;
-      if (rearrangeable) {
-        top = props.config.posY - dialog.clientHeight / 2;
-        const bottom = top + dialogRect.height;
-        if (top < minMargin) {
-          top = minMargin;
-        } else if (viewport.height - bottom < minMargin) {
-          top = viewport.height - minMargin - dialogRect.height;
-        }
-      } else {
-        top = viewport.height / 2 - dialog.clientHeight / 2;
+    let top;
+    if (rearrangeable) {
+      top = props.config.posY - dialogRef.value.clientHeight / 2;
+      const bottom = top + dialogRect.height;
+      if (top < minMargin) {
+        top = minMargin;
+      } else if (viewport.height - bottom < minMargin) {
+        top = viewport.height - minMargin - dialogRect.height;
       }
-
-      dialog.style.position = "absolute";
-      dialog.style.top = `${top}px`;
+    } else {
+      top = viewport.height / 2 - dialogRef.value.clientHeight / 2;
     }
+
+    dialogRef.value.style.position = "absolute";
+    dialogRef.value.style.top = `${top}px`;
   }
 });
 
 onBeforeUnmount(() => {
-  const dialogWrapper = document.querySelector(".confirm-dialog-wrapper");
-  if (dialogWrapper) {
-    dialogWrapper.removeEventListener("click", onClick);
+  if (wrapperRef.value) {
+    wrapperRef.value.removeEventListener("click", onClick);
   }
   document.removeEventListener("keyup", onKeyup);
 });
 </script>
 
 <template>
-  <div class="confirm-dialog-wrapper">
-    <div class="confirm-dialog">
+  <div ref="wrapperRef" class="confirm-dialog-wrapper">
+    <div ref="dialogRef" class="confirm-dialog">
       <div class="text" v-text="config.text"></div>
       <div class="buttons">
         <button class="cancel" type="button" @click="cancel" v-text="config.cancelText"></button>

@@ -9,6 +9,8 @@ export {
   formatDuration,
   formatTimestamp,
   runIfFn,
+  debounce,
+  computeTaskDuration,
 };
 
 /**
@@ -169,4 +171,35 @@ function sort(array, selector) {
     const vB = selector(b);
     return vA > vB ? 1 : vB > vA ? -1 : 0;
   });
+}
+
+/**
+ * Debounces a function so it only fires after the given delay has passed without new calls.
+ * @param {Function} fn Function to debounce
+ * @param {number} delay Delay in milliseconds
+ */
+function debounce(fn, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+/**
+ * Computes the total duration of a task (including subtasks) in seconds.
+ * For active timeslots, uses the provided `now` value as the end time.
+ * @param {Object} task Task object with .timeslots and .subTasks arrays
+ * @param {number} now Current timestamp in milliseconds
+ */
+function computeTaskDuration(task, now = Date.now()) {
+  const timeslots = task.timeslots || [];
+  const taskSeconds = timeslots.reduce((sum, ts) => {
+    if (ts.begin == null) return sum;
+    const end = ts.end || now;
+    return sum + Math.round((end - ts.begin) / 1000);
+  }, 0);
+  const subTasks = task.subTasks || [];
+  const subTasksSeconds = subTasks.reduce((sum, st) => sum + computeTaskDuration(st, now), 0);
+  return taskSeconds + subTasksSeconds;
 }
